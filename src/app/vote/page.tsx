@@ -222,6 +222,17 @@ export default function VotePage() {
             {isProxy && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
                 <p className="text-sm font-semibold text-amber-800">ข้อมูลการมอบฉันทะ</p>
+                <a
+                  href="/proxy-letter.pdf"
+                  download
+                  className="flex items-center gap-2 p-3 bg-white border border-amber-300 rounded-lg text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  ดาวน์โหลดแบบฟอร์มหนังสือมอบฉันทะ (PDF)
+                </a>
+                <p className="text-xs text-amber-700">ดาวน์โหลด กรอกข้อมูล ลงลายมือชื่อ แล้วถ่ายรูปหรือสแกนเพื่ออัปโหลดด้านล่าง</p>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     ชื่อผู้รับมอบฉันทะ <span className="text-red-500">*</span>
