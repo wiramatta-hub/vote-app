@@ -1,0 +1,74 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getAdminSession } from '@/lib/session';
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getAdminSession();
+  if (!session || session.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const body = (await req.json()) as {
+    house_no?: string;
+    owner_name?: string;
+    id_card_last4?: string;
+    is_active?: boolean;
+  };
+
+  const houseNo = body.house_no?.trim();
+  const ownerName = body.owner_name?.trim();
+  const idCardLast4 = body.id_card_last4?.trim();
+
+  if (!houseNo || !ownerName || !idCardLast4) {
+    return NextResponse.json(
+      { error: 'ข้อมูลไม่ครบถ้วน: ต้องมีบ้านเลขที่ ชื่อเจ้าบ้าน และเลขบัตร 4 ตัวท้าย' },
+      { status: 400 }
+    );
+  }
+
+  if (!/^\d{4}$/.test(idCardLast4)) {
+    return NextResponse.json(
+      { error: 'เลขบัตรประชาชน 4 ตัวท้ายต้องเป็นตัวเลข 4 หลัก' },
+      { status: 400 }
+    );
+  }
+
+  const existing = await sql`SELECT id FROM households WHERE id = ${id} LIMIT 1`;
+  if (!existing[0]) {
+    return NextResponse.json({ error: 'ไม่พบบ้านเลขที่นี้' }, { status: 404 });
+  }
+
+  // Ensure house_no is unique across other households
+  const duplicate = await sql`
+    SELECT id FROM households WHERE house_no = ${houseNo} AND id <> ${id} LIMIT 1
+  `;
+  if (duplicate[0]) {
+    return NextResponse.json(
+      { error: `บ้านเลขที่ ${houseNo} มีอยู่แล้วในระบบ` },
+      { status: 409 }
+    );
+  }
+
+  const isActive = typeof body.is_active === 'boolean' ? body.is_active : true;
+
+  const updated = await sql`
+    UPDATE households
+    SET house_no = ${houseNo},
+        owner_name = ${ownerName},
+        id_card_last4 = ${idCardLast4},
+        is_active = ${isActive}
+    WHERE id = ${id}
+    RETURNING id, house_no, owner_name, id_card_last4, invite_code, is_active
+  `;
+
+  await sql`
+    INSERT INTO audit_logs (actor, action, target_id, metadata)
+    VALUES (${session.username}, 'household_updated', ${id}, ${JSON.stringify({ house_no: houseNo })})
+  `;
+
+  return NextResponse.json({ success: true, household: updated[0] });
+}
