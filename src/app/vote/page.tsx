@@ -59,7 +59,7 @@ export default function VotePage() {
 
     if (!choice) { setError('กรุณาเลือกมติ'); return; }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
-    if (!houseRegFile) { setError('กรุณาแนบสำเนาทะเบียนบ้าน'); return; }
+    if (!houseRegFile) { setError('กรุณาแนบสำเนาบัตรประชาชน (ขีดคร่อมบัตร)'); return; }
     if (isProxy && !proxyName.trim()) { setError('กรุณากรอกชื่อผู้รับมอบฉันทะ'); return; }
     if (isProxy && !proxyFile) { setError('กรุณาแนบใบมอบฉันทะ'); return; }
 
@@ -259,17 +259,17 @@ export default function VotePage() {
               </div>
             )}
 
-            {/* House Registration */}
+            {/* ID Card */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                สำเนาทะเบียนบ้าน <span className="text-red-500">*</span>
+                สำเนาบัตรประชาชน (ขีดคร่อมบัตร) <span className="text-red-500">*</span>
               </label>
               <FileInput
                 file={houseRegFile}
                 onChange={setHouseRegFile}
-                placeholder="อัปโหลดสำเนาทะเบียนบ้าน (JPG, PNG, PDF)"
+                placeholder="อัปโหลดสำเนาบัตรประชาชน (JPG, PNG, PDF)"
               />
-              <p className="text-xs text-gray-400 mt-1">ขนาดไฟล์ไม่เกิน 5MB</p>
+              <p className="text-xs text-gray-400 mt-1">กรุณาขีดคร่อมบัตรพร้อมเขียนกำกับว่า “ใช้สำหรับลงมติเท่านั้น” • ขนาดไฟล์ไม่เกิน 5MB</p>
             </div>
 
             <button

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (!choice || !voterName || !houseRegistration) {
     return NextResponse.json(
-      { error: 'กรุณากรอกข้อมูลและแนบสำเนาทะเบียนบ้านให้ครบถ้วน' },
+      { error: 'กรุณากรอกข้อมูลและแนบสำเนาบัตรประชาชน (ขีดคร่อมบัตร) ให้ครบถ้วน' },
       { status: 400 }
     );
   }
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    await storeFile(houseRegistration, 'house_registration');
+    await storeFile(houseRegistration, 'id_card_owner');
     if (isProxy && proxyLetter) {
       await storeFile(proxyLetter, 'proxy_letter');
     }
