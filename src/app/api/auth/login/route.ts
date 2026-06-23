@@ -2,36 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { signToken, VOTER_COOKIE } from '@/lib/session';
 
+function genInviteCode() {
+  return Array.from({ length: 8 }, () =>
+    '0123456789ABCDEF'[Math.floor(Math.random() * 16)]
+  ).join('');
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { house_no, invite_code, id_card_last4 } = body as Record<string, string>;
+  const { house_no, owner_name } = body as Record<string, string>;
 
-  if (!house_no?.trim() || !invite_code?.trim() || !id_card_last4?.trim()) {
-    return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 });
+  if (!house_no?.trim() || !owner_name?.trim()) {
+    return NextResponse.json({ error: 'กรุณากรอกบ้านเลขที่และชื่อ-นามสกุล' }, { status: 400 });
   }
 
-  const households = await sql`
-    SELECT * FROM households
-    WHERE house_no = ${house_no.trim()}
-      AND invite_code = ${invite_code.trim().toUpperCase()}
-      AND id_card_last4 = ${id_card_last4.trim()}
-      AND is_active = true
-    LIMIT 1
+  const houseNo = house_no.trim();
+  const ownerName = owner_name.trim();
+
+  // หาบ้านเดิม ถ้าไม่มีให้สร้างใหม่อัตโนมัติ (เปิดลงทะเบียนตอนเข้าระบบ)
+  const found = await sql`
+    SELECT * FROM households WHERE house_no = ${houseNo} LIMIT 1
   `;
-  const household = households[0];
+  let household = found[0];
 
   if (!household) {
+    const created = await sql`
+      INSERT INTO households (house_no, owner_name, id_card_last4, invite_code, is_active)
+      VALUES (${houseNo}, ${ownerName}, '', ${genInviteCode()}, true)
+      RETURNING *
+    `;
+    household = created[0];
+  } else if (!household.is_active) {
     return NextResponse.json(
-      { error: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบบ้านเลขที่ รหัสเชิญ และเลขบัตรประชาชน 4 ตัวท้าย' },
-      { status: 401 }
+      { error: 'บ้านเลขที่นี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' },
+      { status: 403 }
     );
-  }
-
-  if (household.invite_expires_at && new Date(household.invite_expires_at) < new Date()) {
-    return NextResponse.json(
-      { error: 'รหัสเชิญหมดอายุแล้ว กรุณาติดต่อผู้ดูแลระบบ' },
-      { status: 401 }
-    );
+  } else if (!household.owner_name) {
+    // อัปเดตชื่อเจ้าบ้านถ้ายังว่าง
+    await sql`UPDATE households SET owner_name = ${ownerName} WHERE id = ${household.id}`;
+    household.owner_name = ownerName;
   }
 
   const existing = await sql`

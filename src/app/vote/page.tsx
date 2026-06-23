@@ -39,7 +39,9 @@ export default function VotePage() {
     // Alternative: store in sessionStorage during login
     const stored = sessionStorage.getItem('household_info');
     if (stored) {
-      setHousehold(JSON.parse(stored));
+      const info = JSON.parse(stored);
+      setHousehold(info);
+      if (info.owner_name) setVoterName(info.owner_name);
     }
   }, []);
 
@@ -269,7 +271,7 @@ export default function VotePage() {
                 onChange={setHouseRegFile}
                 placeholder="อัปโหลดสำเนาบัตรประชาชน (JPG, PNG, PDF)"
               />
-              <p className="text-xs text-gray-400 mt-1">กรุณาขีดคร่อมบัตรพร้อมเขียนกำกับว่า “ใช้สำหรับลงมติเท่านั้น” • ขนาดไฟล์ไม่เกิน 5MB</p>
+              <p className="text-xs text-gray-400 mt-1">กรุณาขีดคร่อมบัตรพร้อมเขียนกำกับว่า “ใช้สำหรับการประชุมจัดตั้งนิติบุคคลเท่านั้น” • ขนาดไฟล์ไม่เกิน 5MB</p>
             </div>
 
             <button

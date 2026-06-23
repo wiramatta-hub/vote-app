@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ house_no: '', invite_code: '', id_card_last4: '' });
+  const [form, setForm] = useState({ house_no: '', owner_name: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,6 +25,10 @@ export default function LoginPage() {
       if (!res.ok) {
         setError(data.error ?? 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
         return;
+      }
+
+      if (data.household) {
+        sessionStorage.setItem('household_info', JSON.stringify(data.household));
       }
 
       if (data.hasVoted && data.voteStatus === 'verified') {
@@ -54,7 +58,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-800">ระบบลงมติออนไลน์</h1>
-            <p className="text-gray-500 mt-1 text-sm">กรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
+            <p className="text-gray-500 mt-1 text-sm">กรอกบ้านเลขที่และชื่อของท่านเพื่อเริ่มลงมติ</p>
           </div>
 
           {/* Error */}
@@ -81,35 +85,17 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                รหัสเชิญ
+                ชื่อ-นามสกุลเจ้าบ้าน
               </label>
               <input
                 type="text"
                 required
-                placeholder="รหัส 8 หลัก เช่น A1B2C3D4"
-                value={form.invite_code}
-                onChange={(e) => setForm({ ...form, invite_code: e.target.value.toUpperCase() })}
-                maxLength={8}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition font-mono tracking-widest text-gray-800"
+                placeholder="ชื่อ-นามสกุลตามบัตรประชาชน"
+                value={form.owner_name}
+                onChange={(e) => setForm({ ...form, owner_name: e.target.value })}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
               />
-              <p className="text-xs text-gray-400 mt-1">รหัสได้รับจากผู้ดูแลระบบหมู่บ้าน</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                เลขบัตรประชาชน 4 ตัวท้าย
-              </label>
-              <input
-                type="text"
-                required
-                inputMode="numeric"
-                pattern="\d{4}"
-                placeholder="เช่น 1234"
-                value={form.id_card_last4}
-                onChange={(e) => setForm({ ...form, id_card_last4: e.target.value.replace(/\D/g, '').slice(0, 4) })}
-                maxLength={4}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition font-mono tracking-widest text-gray-800"
-              />
+              <p className="text-xs text-gray-400 mt-1">เจ้าหน้าที่จะตรวจสอบตัวตนจากสำเนาบัตรประชาชนที่ท่านแนบ</p>
             </div>
 
             <button
