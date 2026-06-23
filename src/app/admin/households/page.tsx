@@ -29,7 +29,6 @@ export default function HouseholdsPage() {
   const [importError, setImportError] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [copied, setCopied] = useState<string | null>(null);
   const [editing, setEditing] = useState<Household | null>(null);
   const [editForm, setEditForm] = useState({ house_no: '', owner_name: '', id_card_last4: '', is_active: true });
   const [editError, setEditError] = useState('');
@@ -82,12 +81,6 @@ export default function HouseholdsPage() {
     }
   };
 
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopied(code);
-    setTimeout(() => setCopied(null), 1500);
-  };
-
   const openEdit = (h: Household) => {
     setEditError('');
     setEditing(h);
@@ -132,16 +125,16 @@ export default function HouseholdsPage() {
   };
 
   const exportCSV = () => {
-    const rows = [['บ้านเลขที่', 'ชื่อเจ้าบ้าน', 'รหัสเชิญ', 'สถานะ']];
+    const rows = [['บ้านเลขที่', 'ชื่อเจ้าบ้าน', 'สถานะ']];
     households.forEach((h) => {
-      rows.push([h.house_no, h.owner_name, h.invite_code, getVoteStatus(h)]);
+      rows.push([h.house_no, h.owner_name, getVoteStatus(h)]);
     });
     const csv = rows.map((r) => r.join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'invite_codes.csv';
+    a.download = 'households.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -230,7 +223,6 @@ export default function HouseholdsPage() {
                   <tr>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold">บ้านเลขที่</th>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold">ชื่อเจ้าบ้าน</th>
-                    <th className="text-left px-4 py-3 text-gray-600 font-semibold">รหัสเชิญ</th>
                     <th className="text-left px-4 py-3 text-gray-600 font-semibold">สถานะ</th>
                     <th className="text-right px-4 py-3 text-gray-600 font-semibold">จัดการ</th>
                   </tr>
@@ -243,20 +235,6 @@ export default function HouseholdsPage() {
                       <tr key={h.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 font-mono font-medium text-gray-800">{h.house_no}</td>
                         <td className="px-4 py-3 text-gray-700">{h.owner_name}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <code className="font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded tracking-widest">
-                              {h.invite_code}
-                            </code>
-                            <button
-                              onClick={() => copyCode(h.invite_code)}
-                              className="text-gray-400 hover:text-gray-600 text-xs"
-                              title="คัดลอก"
-                            >
-                              {copied === h.invite_code ? '✓' : '📋'}
-                            </button>
-                          </div>
-                        </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.class}`}>
                             {badge.label}
@@ -275,7 +253,7 @@ export default function HouseholdsPage() {
                   })}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                      <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
                         {search ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีข้อมูลบ้านเลขที่'}
                       </td>
                     </tr>
@@ -293,7 +271,7 @@ export default function HouseholdsPage() {
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
             <h3 className="font-bold text-gray-800 mb-1">แก้ไขข้อมูลลูกบ้าน</h3>
             <p className="text-sm text-gray-500 mb-4">
-              รหัสเชิญ: <code className="font-mono text-indigo-700">{editing.invite_code}</code>
+              บ้านเลขที่ <code className="font-mono text-indigo-700">{editing.house_no}</code>
             </p>
             <div className="space-y-3">
               <div>
