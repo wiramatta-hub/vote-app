@@ -31,9 +31,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'ตัวเลือกไม่ถูกต้อง' }, { status: 400 });
   }
 
-  if (isProxy && (!proxyName || !proxyLetter)) {
+  if (isProxy && !proxyLetter) {
     return NextResponse.json(
-      { error: 'กรณีมอบฉันทะต้องกรอกชื่อผู้รับมอบและแนบใบมอบฉันทะ' },
+      { error: 'กรณีมอบฉันทะต้องแนบใบมอบฉันทะ' },
       { status: 400 }
     );
   }

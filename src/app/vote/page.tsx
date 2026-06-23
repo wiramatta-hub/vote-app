@@ -16,7 +16,6 @@ export default function VotePage() {
   const [choice, setChoice] = useState<'juristic' | 'municipality' | ''>('');
   const [voterName, setVoterName] = useState('');
   const [isProxy, setIsProxy] = useState(false);
-  const [proxyName, setProxyName] = useState('');
   const [houseRegFile, setHouseRegFile] = useState<File | null>(null);
   const [proxyFile, setProxyFile] = useState<File | null>(null);
   const [error, setError] = useState('');
@@ -62,7 +61,6 @@ export default function VotePage() {
     if (!choice) { setError('กรุณาเลือกมติ'); return; }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
     if (!houseRegFile) { setError('กรุณาแนบสำเนาบัตรประชาชน (ขีดคร่อมบัตร)'); return; }
-    if (isProxy && !proxyName.trim()) { setError('กรุณากรอกชื่อผู้รับมอบฉันทะ'); return; }
     if (isProxy && !proxyFile) { setError('กรุณาแนบใบมอบฉันทะ'); return; }
 
     const fileError = validateFiles([houseRegFile, proxyFile]);
@@ -75,7 +73,6 @@ export default function VotePage() {
       formData.append('voter_name', voterName.trim());
       formData.append('is_proxy', String(isProxy));
       if (isProxy) {
-        formData.append('proxy_name', proxyName.trim());
         formData.append('proxy_letter', proxyFile!);
       }
       formData.append('house_registration', houseRegFile);
@@ -240,19 +237,6 @@ export default function VotePage() {
                   <p>คุณอัญชลี อุดร โทรศัพท์ 094-824-3082</p>
                   <p>บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่าวาเลย์ (หางดง)</p>
                   <p>ตำบลหางดง อำเภอหางดง จังหวัดเชียงใหม่ 50230</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ชื่อผู้รับมอบฉันทะ <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required={isProxy}
-                    placeholder="ชื่อ-นามสกุลผู้รับมอบ"
-                    value={proxyName}
-                    onChange={(e) => setProxyName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
-                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
