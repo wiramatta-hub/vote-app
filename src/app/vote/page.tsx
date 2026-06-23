@@ -235,7 +235,7 @@ export default function VotePage() {
                 <div className="p-3 bg-white border border-amber-300 rounded-lg text-xs text-amber-900 leading-relaxed">
                   <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่</p>
                   <p>คุณอัญชลี อุดร โทรศัพท์ 094-824-3082</p>
-                  <p>บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่าวาเลย์ (หางดง)</p>
+                  <p>บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่า วาเลย์ (หางดง)</p>
                   <p>ตำบลหางดง อำเภอหางดง จังหวัดเชียงใหม่ 50230</p>
                 </div>
                 <div>
