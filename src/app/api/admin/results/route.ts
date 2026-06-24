@@ -28,10 +28,12 @@ export async function GET() {
   const submitted = statusMap['submitted'] ?? 0;
   const verified = statusMap['verified'] ?? 0;
   const rejected = statusMap['rejected'] ?? 0;
+  const total = submitted + verified + rejected;
 
   return NextResponse.json({
     totalHouseholds: households.count,
-    totalBallots: submitted + verified + rejected,
+    total,
+    totalBallots: total,
     submitted,
     verified,
     rejected,
