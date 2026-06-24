@@ -16,7 +16,6 @@ export default function VotePage() {
   const [choice, setChoice] = useState<'juristic' | 'municipality' | 'abstain' | 'follow_majority' | ''>('');
   const [voterName, setVoterName] = useState('');
   const [isProxy, setIsProxy] = useState(false);
-  const [proxyName, setProxyName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,7 +48,6 @@ export default function VotePage() {
 
     if (!choice) { setError('กรุณาเลือกมติ'); return; }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
-    if (isProxy && !proxyName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้มอบฉันทะ'); return; }
 
     setSubmitting(true);
     try {
@@ -60,7 +58,6 @@ export default function VotePage() {
           choice,
           voter_name: voterName.trim(),
           is_proxy: isProxy,
-          proxy_name: isProxy ? proxyName.trim() : null,
         }),
       });
       const data = await res.json();
@@ -208,18 +205,6 @@ export default function VotePage() {
             {isProxy && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
                 <p className="text-sm font-semibold text-amber-800">ข้อมูลการมอบฉันทะ</p>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ชื่อ-นามสกุลผู้มอบฉันทะ <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ชื่อ-นามสกุลเจ้าบ้านผู้มอบฉันทะ"
-                    value={proxyName}
-                    onChange={(e) => setProxyName(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
-                  />
-                </div>
                 <a
                   href="/proxy-letter.pdf"
                   download
@@ -230,9 +215,14 @@ export default function VotePage() {
                   </svg>
                   ดาวน์โหลดแบบฟอร์มหนังสือมอบฉันทะ (PDF)
                 </a>
-                <p className="text-xs text-amber-700">ดาวน์โหลด กรอกข้อมูล ลงลายมือชื่อ แล้วส่งเอกสารตัวจริงตามที่อยู่ด้านล่าง</p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  ดาวน์โหลดหนังสือมอบฉันทะ กรอกข้อมูล ลงลายมือชื่อ แล้วส่งเอกสารตัวจริง<br />
+                  1. หนังสือมอบฉันทะ<br />
+                  2. สำเนาบัตรประชาชน ลงชื่อพร้อมขีดคร่อม &ldquo;เอกสารใช้สำหรับการประชุมจัดตั้งนิติบุคคลเท่านั้น&rdquo;<br />
+                  ตามที่อยู่ด้านล่าง
+                </p>
                 <div className="p-3 bg-white border border-amber-300 rounded-lg text-xs text-amber-900 leading-relaxed">
-                  <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่ตัวจิตอาสา</p>
+                  <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่จิตอาสา</p>
                   <p>คุณอัญชลี อุดร โทรศัพท์ 094-824-3082</p>
                   <p>บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่า วาเลย์ (หางดง)</p>
                   <p>ตำบลหางดง อำเภอหางดง จังหวัดเชียงใหม่ 50230</p>

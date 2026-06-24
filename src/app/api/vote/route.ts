@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
   const choice = body.choice as string;
   const voterName = (body.voter_name as string)?.trim();
   const isProxy = body.is_proxy === true;
-  const proxyName = (body.proxy_name as string)?.trim() || null;
 
   if (!choice || !voterName) {
     return NextResponse.json(
@@ -25,13 +24,6 @@ export async function POST(req: NextRequest) {
 
   if (!VALID_CHOICES.includes(choice)) {
     return NextResponse.json({ error: 'ตัวเลือกไม่ถูกต้อง' }, { status: 400 });
-  }
-
-  if (isProxy && !proxyName) {
-    return NextResponse.json(
-      { error: 'กรณีมอบฉันทะต้องระบุชื่อผู้มอบฉันทะ' },
-      { status: 400 }
-    );
   }
 
   // Prevent double voting
@@ -54,7 +46,7 @@ export async function POST(req: NextRequest) {
     INSERT INTO ballots (household_id, voter_name, is_proxy, proxy_name, choice, status, ip_address)
     VALUES (
       ${session.householdId}, ${voterName}, ${isProxy},
-      ${isProxy ? proxyName : null}, ${choice}, 'submitted', ${ip}
+      ${null}, ${choice}, 'submitted', ${ip}
     )
     RETURNING id
   `;
