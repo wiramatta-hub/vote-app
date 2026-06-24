@@ -58,7 +58,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-800">ระบบลงมติออนไลน์</h1>
-            <p className="text-gray-500 mt-1 text-sm">กรอกบ้านเลขที่และชื่อของท่านเพื่อเริ่มลงมติ</p>
+            <p className="text-gray-500 mt-1 text-sm">กรอกบ้านเลขที่หรือชื่อของท่านเพื่อเริ่มลงมติ</p>
           </div>
 
           {/* Error */}
@@ -75,7 +75,6 @@ export default function LoginPage() {
               </label>
               <input
                 type="text"
-                required
                 placeholder="เช่น 1/1, 25, 100/5"
                 value={form.house_no}
                 onChange={(e) => setForm({ ...form, house_no: e.target.value })}
@@ -89,13 +88,12 @@ export default function LoginPage() {
               </label>
               <input
                 type="text"
-                required
                 placeholder="ชื่อ-นามสกุลตามบัตรประชาชน"
                 value={form.owner_name}
                 onChange={(e) => setForm({ ...form, owner_name: e.target.value })}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
               />
-              <p className="text-xs text-gray-400 mt-1">เจ้าหน้าที่จะตรวจสอบตัวตนจากสำเนาบัตรประชาชนที่ท่านแนบ</p>
+              <p className="text-xs text-gray-400 mt-1">เจ้าหน้าที่จะตรวจสอบตัวตนจากสำเนาบัตรประชาชนที่ท่านส่งเอกสารให้ตัวแทน</p>
             </div>
 
             <button
