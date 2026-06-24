@@ -9,8 +9,8 @@ type TabStatus = 'submitted' | 'verified' | 'rejected' | 'all';
 
 const TAB_LABELS: Record<TabStatus, string> = {
   submitted: 'รอรับเอกสาร',
-  verified: 'ผ่านแล้ว',
   rejected: 'ไม่ผ่าน',
+  verified: 'ผ่านแล้ว',
   all: 'ทั้งหมด',
 };
 
