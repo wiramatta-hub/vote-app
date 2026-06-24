@@ -62,7 +62,7 @@ function SuccessContent() {
           </div>
 
           <Link
-            href="/admin/results"
+            href="/results"
             className="mt-6 inline-block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm"
           >
             ดูผลโหวตปัจจุบัน
