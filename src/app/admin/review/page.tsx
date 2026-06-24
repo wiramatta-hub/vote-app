@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Ballot, VoteDocument } from '@/lib/types';
+import type { Ballot } from '@/lib/types';
 
 type TabStatus = 'submitted' | 'verified' | 'rejected' | 'all';
 
 const TAB_LABELS: Record<TabStatus, string> = {
-  submitted: 'รอตรวจสอบ',
+  submitted: 'รอรับเอกสาร',
   verified: 'ผ่านแล้ว',
   rejected: 'ไม่ผ่าน',
   all: 'ทั้งหมด',
@@ -36,6 +36,11 @@ export default function ReviewPage() {
   const [rejectModal, setRejectModal] = useState<{ id: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [docChecks, setDocChecks] = useState<Record<string, boolean>>({});
+
+  const toggleDocCheck = (key: string) => {
+    setDocChecks((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const fetchBallots = useCallback(async () => {
     setLoading(true);
@@ -72,12 +77,6 @@ export default function ReviewPage() {
     setRejectModal(null);
     setRejectReason('');
     fetchBallots();
-  };
-
-  const openDoc = async (doc: VoteDocument) => {
-    const res = await fetch(`/api/documents/${doc.id}`);
-    const { url } = await res.json();
-    if (url) window.open(url, '_blank');
   };
 
   return (
@@ -160,26 +159,30 @@ export default function ReviewPage() {
 
                 {expanded === ballot.id && (
                   <div className="border-t border-gray-100 p-4 space-y-4">
-                    {/* Documents */}
+                    {/* Documents check */}
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">เอกสารแนบ</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ballot.documents?.map((doc) => (
-                          <button
-                            key={doc.id}
-                            onClick={() => openDoc(doc)}
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 hover:bg-blue-100 transition-colors"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                            </svg>
-                            {doc.doc_type === 'id_card_owner' ? 'สำเนาบัตรประชาชน' : 'ใบมอบฉันทะ'}
-                          </button>
-                        ))}
-                        {(!ballot.documents || ballot.documents.length === 0) && (
-                          <p className="text-sm text-gray-400">ไม่มีเอกสาร</p>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">เอกสารแนบ (เจ้าหน้าที่ตรวจรับ)</p>
+                      <div className="flex flex-col gap-2">
+                        {ballot.is_proxy && (
+                          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!docChecks[`${ballot.id}-proxy`]}
+                              onChange={() => toggleDocCheck(`${ballot.id}-proxy`)}
+                              className="w-4 h-4 text-indigo-600 rounded"
+                            />
+                            หนังสือมอบฉันทะ
+                          </label>
                         )}
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!docChecks[`${ballot.id}-idcard`]}
+                            onChange={() => toggleDocCheck(`${ballot.id}-idcard`)}
+                            className="w-4 h-4 text-indigo-600 rounded"
+                          />
+                          สำเนาบัตรประชาชน
+                        </label>
                       </div>
                     </div>
 
