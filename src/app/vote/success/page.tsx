@@ -41,8 +41,8 @@ function SuccessContent() {
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">ส่งมติสำเร็จ!</h2>
-              <p className="text-gray-500">ระบบได้รับมติและเอกสารของท่านแล้ว กำลังรอเจ้าหน้าที่ตรวจสอบเอกสาร</p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">ลงมติสำเร็จ!</h2>
+              <p className="text-gray-500">ระบบได้รับมติท่านแล้ว กำลังรอเอกสารของท่าน</p>
             </>
           )}
 
