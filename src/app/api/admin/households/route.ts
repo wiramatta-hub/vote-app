@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { households } = (await req.json()) as {
-    households: { house_no: string; owner_name: string; id_card_last4: string }[];
+    households: { house_no: string; owner_name: string }[];
   };
 
   if (!Array.isArray(households) || households.length === 0) {
@@ -36,15 +36,9 @@ export async function POST(req: NextRequest) {
   }
 
   for (const h of households) {
-    if (!h.house_no?.trim() || !h.owner_name?.trim() || !h.id_card_last4?.trim()) {
+    if (!h.house_no?.trim() || !h.owner_name?.trim()) {
       return NextResponse.json(
-        { error: 'ข้อมูลไม่ครบถ้วน: ต้องมี house_no, owner_name, id_card_last4' },
-        { status: 400 }
-      );
-    }
-    if (!/^\d{4}$/.test(h.id_card_last4.trim())) {
-      return NextResponse.json(
-        { error: `id_card_last4 ของ ${h.house_no} ต้องเป็นตัวเลข 4 หลัก` },
+        { error: 'ข้อมูลไม่ครบถ้วน: ต้องมี house_no, owner_name' },
         { status: 400 }
       );
     }
@@ -53,14 +47,13 @@ export async function POST(req: NextRequest) {
   let count = 0;
   for (const h of households) {
     await sql`
-      INSERT INTO households (house_no, owner_name, id_card_last4, invite_code, is_active)
+      INSERT INTO households (house_no, owner_name, invite_code, is_active)
       VALUES (
-        ${h.house_no.trim()}, ${h.owner_name.trim()}, ${h.id_card_last4.trim()},
+        ${h.house_no.trim()}, ${h.owner_name.trim()},
         ${randomBytes(4).toString('hex').toUpperCase()}, true
       )
       ON CONFLICT (house_no) DO UPDATE
       SET owner_name = EXCLUDED.owner_name,
-          id_card_last4 = EXCLUDED.id_card_last4,
           is_active = true
     `;
     count++;

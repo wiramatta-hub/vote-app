@@ -15,24 +15,15 @@ export async function PATCH(
   const body = (await req.json()) as {
     house_no?: string;
     owner_name?: string;
-    id_card_last4?: string;
     is_active?: boolean;
   };
 
   const houseNo = body.house_no?.trim();
   const ownerName = body.owner_name?.trim();
-  const idCardLast4 = body.id_card_last4?.trim();
 
-  if (!houseNo || !ownerName || !idCardLast4) {
+  if (!houseNo || !ownerName) {
     return NextResponse.json(
-      { error: 'ข้อมูลไม่ครบถ้วน: ต้องมีบ้านเลขที่ ชื่อเจ้าบ้าน และเลขบัตร 4 ตัวท้าย' },
-      { status: 400 }
-    );
-  }
-
-  if (!/^\d{4}$/.test(idCardLast4)) {
-    return NextResponse.json(
-      { error: 'เลขบัตรประชาชน 4 ตัวท้ายต้องเป็นตัวเลข 4 หลัก' },
+      { error: 'ข้อมูลไม่ครบถ้วน: ต้องมีบ้านเลขที่ และชื่อเจ้าบ้าน' },
       { status: 400 }
     );
   }
@@ -59,10 +50,9 @@ export async function PATCH(
     UPDATE households
     SET house_no = ${houseNo},
         owner_name = ${ownerName},
-        id_card_last4 = ${idCardLast4},
         is_active = ${isActive}
     WHERE id = ${id}
-    RETURNING id, house_no, owner_name, id_card_last4, invite_code, is_active
+    RETURNING id, house_no, owner_name, invite_code, is_active
   `;
 
   await sql`

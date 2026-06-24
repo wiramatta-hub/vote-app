@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
 
   if (!household) {
     const created = await sql`
-      INSERT INTO households (house_no, owner_name, id_card_last4, invite_code, is_active)
-      VALUES (${houseNo}, ${ownerName}, '', ${genInviteCode()}, true)
+      INSERT INTO households (house_no, owner_name, invite_code, is_active)
+      VALUES (${houseNo}, ${ownerName}, ${genInviteCode()}, true)
       RETURNING *
     `;
     household = created[0];

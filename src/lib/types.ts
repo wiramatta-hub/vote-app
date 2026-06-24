@@ -7,7 +7,6 @@ export interface Household {
   id: string;
   house_no: string;
   owner_name: string;
-  id_card_last4: string;
   invite_code: string;
   invite_expires_at: string | null;
   is_active: boolean;

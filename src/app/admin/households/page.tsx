@@ -30,7 +30,7 @@ export default function HouseholdsPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Household | null>(null);
-  const [editForm, setEditForm] = useState({ house_no: '', owner_name: '', id_card_last4: '', is_active: true });
+  const [editForm, setEditForm] = useState({ house_no: '', owner_name: '', is_active: true });
   const [editError, setEditError] = useState('');
   const [editLoading, setEditLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -90,7 +90,6 @@ export default function HouseholdsPage() {
     setEditForm({
       house_no: h.house_no,
       owner_name: h.owner_name,
-      id_card_last4: h.id_card_last4,
       is_active: h.is_active,
     });
   };
@@ -98,12 +97,8 @@ export default function HouseholdsPage() {
   const handleEditSave = async () => {
     if (!editing) return;
     setEditError('');
-    if (!editForm.house_no.trim() || !editForm.owner_name.trim() || !editForm.id_card_last4.trim()) {
+    if (!editForm.house_no.trim() || !editForm.owner_name.trim()) {
       setEditError('กรุณากรอกข้อมูลให้ครบถ้วน');
-      return;
-    }
-    if (!/^\d{4}$/.test(editForm.id_card_last4.trim())) {
-      setEditError('เลขบัตรประชาชน 4 ตัวท้ายต้องเป็นตัวเลข 4 หลัก');
       return;
     }
     setEditLoading(true);
@@ -318,17 +313,6 @@ export default function HouseholdsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-800"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">เลขบัตรประชาชน 4 ตัวท้าย <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={editForm.id_card_last4}
-                  onChange={(e) => setEditForm({ ...editForm, id_card_last4: e.target.value.replace(/\D/g, '') })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-800 font-mono tracking-widest"
-                />
-              </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -403,7 +387,7 @@ export default function HouseholdsPage() {
               วาง JSON array ในรูปแบบด้านล่าง ระบบจะสร้างรหัสเชิญให้อัตโนมัติ
             </p>
             <div className="mb-3 p-3 bg-gray-50 rounded-lg text-xs font-mono text-gray-600">
-              {`[\n  { "house_no": "1/1", "owner_name": "สมชาย ใจดี", "id_card_last4": "1234" },\n  { "house_no": "1/2", "owner_name": "สมหญิง ดีใจ", "id_card_last4": "5678" }\n]`}
+              {`[\n  { "house_no": "1/1", "owner_name": "สมชาย ใจดี" },\n  { "house_no": "1/2", "owner_name": "สมหญิง ดีใจ" }\n]`}
             </div>
             <textarea
               value={importJson}

@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS households (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   house_no TEXT NOT NULL UNIQUE,
   owner_name TEXT NOT NULL,
-  id_card_last4 TEXT NOT NULL,
   invite_code TEXT NOT NULL UNIQUE,
   invite_expires_at TIMESTAMPTZ,
   is_active BOOLEAN NOT NULL DEFAULT true,
