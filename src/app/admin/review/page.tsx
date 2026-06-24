@@ -42,6 +42,21 @@ export default function ReviewPage() {
     setDocChecks((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const missingDocs = (ballot: Ballot) => {
+    const m: string[] = [];
+    if (ballot.is_proxy && !docChecks[`${ballot.id}-proxy`]) m.push('หนังสือมอบฉันทะ');
+    if (!docChecks[`${ballot.id}-idcard`]) m.push('สำเนาบัตรประชาชน');
+    return m;
+  };
+
+  const allDocsChecked = (ballot: Ballot) => missingDocs(ballot).length === 0;
+
+  const openReject = (ballot: Ballot) => {
+    const missing = missingDocs(ballot);
+    setRejectReason(missing.length ? `เอกสารไม่ครบ ขาดเอกสาร: ${missing.join(', ')}` : '');
+    setRejectModal({ id: ballot.id });
+  };
+
   const fetchBallots = useCallback(async () => {
     setLoading(true);
     const url = tab === 'all' ? '/api/admin/ballots' : `/api/admin/ballots?status=${tab}`;
@@ -195,20 +210,43 @@ export default function ReviewPage() {
 
                     {/* Actions */}
                     {ballot.status === 'submitted' && (
-                      <div className="flex gap-3">
+                      <div className="space-y-2">
+                        {!allDocsChecked(ballot) && (
+                          <p className="text-xs text-amber-600">
+                            ⚠️ ยังตรวจรับเอกสารไม่ครบ — หากเอกสารไม่ครบให้กดปฏิเสธ และเมื่อได้รับเอกสารครบค่อยกลับมายืนยัน
+                          </p>
+                        )}
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => handleVerify(ballot.id)}
+                            disabled={actionLoading === ballot.id || !allDocsChecked(ballot)}
+                            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                          >
+                            {actionLoading === ballot.id ? 'กำลังบันทึก...' : '✓ อนุมัติ'}
+                          </button>
+                          <button
+                            onClick={() => openReject(ballot)}
+                            disabled={actionLoading === ballot.id}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm font-medium rounded-lg transition-colors"
+                          >
+                            ✕ ปฏิเสธ
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Re-verify after rejection when documents complete */}
+                    {ballot.status === 'rejected' && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-500">
+                          เมื่อได้รับเอกสารครบแล้ว ให้ติ๊กเอกสารด้านบนแล้วกดยืนยันอีกครั้ง
+                        </p>
                         <button
                           onClick={() => handleVerify(ballot.id)}
-                          disabled={actionLoading === ballot.id}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-medium rounded-lg transition-colors"
+                          disabled={actionLoading === ballot.id || !allDocsChecked(ballot)}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
                         >
-                          {actionLoading === ballot.id ? 'กำลังบันทึก...' : '✓ อนุมัติ'}
-                        </button>
-                        <button
-                          onClick={() => { setRejectModal({ id: ballot.id }); setRejectReason(''); }}
-                          disabled={actionLoading === ballot.id}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm font-medium rounded-lg transition-colors"
-                        >
-                          ✕ ปฏิเสธ
+                          {actionLoading === ballot.id ? 'กำลังบันทึก...' : '✓ ยืนยันอีกครั้ง'}
                         </button>
                       </div>
                     )}
