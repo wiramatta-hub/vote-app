@@ -62,8 +62,15 @@ function SuccessContent() {
           </div>
 
           <Link
+            href="/admin/results"
+            className="mt-6 inline-block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm"
+          >
+            ดูผลโหวตปัจจุบัน
+          </Link>
+
+          <Link
             href="/login"
-            className="mt-6 inline-block w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
+            className="mt-3 inline-block w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
           >
             กลับหน้าหลัก
           </Link>
