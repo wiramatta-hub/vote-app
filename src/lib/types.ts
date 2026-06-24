@@ -72,4 +72,6 @@ export interface VoteResults {
   rejected: number;
   juristic: number;
   municipality: number;
+  abstain: number;
+  follow_majority: number;
 }

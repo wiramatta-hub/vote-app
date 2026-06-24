@@ -13,11 +13,10 @@ export default function VotePage() {
   const router = useRouter();
   const [config, setConfig] = useState<VoteConfig | null>(null);
   const [household, setHousehold] = useState<HouseholdInfo | null>(null);
-  const [choice, setChoice] = useState<'juristic' | 'municipality' | ''>('');
+  const [choice, setChoice] = useState<'juristic' | 'municipality' | 'abstain' | 'follow_majority' | ''>('');
   const [voterName, setVoterName] = useState('');
   const [isProxy, setIsProxy] = useState(false);
-  const [houseRegFile, setHouseRegFile] = useState<File | null>(null);
-  const [proxyFile, setProxyFile] = useState<File | null>(null);
+  const [proxyName, setProxyName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -44,40 +43,26 @@ export default function VotePage() {
     }
   }, []);
 
-  const validateFiles = (files: (File | null)[]) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    for (const file of files) {
-      if (!file) continue;
-      if (!allowed.includes(file.type)) return 'รองรับเฉพาะไฟล์ JPG, PNG, WebP และ PDF';
-      if (file.size > 5 * 1024 * 1024) return 'ขนาดไฟล์ต้องไม่เกิน 5MB ต่อไฟล์';
-    }
-    return null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!choice) { setError('กรุณาเลือกมติ'); return; }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
-    if (!houseRegFile) { setError('กรุณาแนบสำเนาบัตรประชาชน (ขีดคร่อมบัตร)'); return; }
-    if (isProxy && !proxyFile) { setError('กรุณาแนบใบมอบฉันทะ'); return; }
-
-    const fileError = validateFiles([houseRegFile, proxyFile]);
-    if (fileError) { setError(fileError); return; }
+    if (isProxy && !proxyName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้มอบฉันทะ'); return; }
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('choice', choice);
-      formData.append('voter_name', voterName.trim());
-      formData.append('is_proxy', String(isProxy));
-      if (isProxy) {
-        formData.append('proxy_letter', proxyFile!);
-      }
-      formData.append('house_registration', houseRegFile);
-
-      const res = await fetch('/api/vote', { method: 'POST', body: formData });
+      const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          choice,
+          voter_name: voterName.trim(),
+          is_proxy: isProxy,
+          proxy_name: isProxy ? proxyName.trim() : null,
+        }),
+      });
       const data = await res.json();
 
       if (!res.ok) {
@@ -157,6 +142,8 @@ export default function VotePage() {
                 {[
                   { value: 'juristic', label: optionA, icon: '🏢', desc: 'จัดตั้งนิติบุคคลดูแลหมู่บ้านเอง' },
                   { value: 'municipality', label: optionB, icon: '🏛️', desc: 'ให้เทศบาลรับหน้าที่ดูแลแทน' },
+                  { value: 'abstain', label: 'งดออกเสียง', icon: '⚪', desc: 'ไม่ขอออกเสียงในมตินี้' },
+                  { value: 'follow_majority', label: 'ออกเสียงตามข้างมาก', icon: '🤝', desc: 'ขอออกเสียงตามเสียงส่วนใหญ่' },
                 ].map((opt) => (
                   <label
                     key={opt.value}
@@ -171,7 +158,7 @@ export default function VotePage() {
                       name="choice"
                       value={opt.value}
                       checked={choice === opt.value}
-                      onChange={() => setChoice(opt.value as 'juristic' | 'municipality')}
+                      onChange={() => setChoice(opt.value as 'juristic' | 'municipality' | 'abstain' | 'follow_majority')}
                       className="sr-only"
                     />
                     <span className="text-2xl">{opt.icon}</span>
@@ -221,6 +208,18 @@ export default function VotePage() {
             {isProxy && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
                 <p className="text-sm font-semibold text-amber-800">ข้อมูลการมอบฉันทะ</p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ชื่อ-นามสกุลผู้มอบฉันทะ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ชื่อ-นามสกุลเจ้าบ้านผู้มอบฉันทะ"
+                    value={proxyName}
+                    onChange={(e) => setProxyName(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
+                  />
+                </div>
                 <a
                   href="/proxy-letter.pdf"
                   download
@@ -231,38 +230,15 @@ export default function VotePage() {
                   </svg>
                   ดาวน์โหลดแบบฟอร์มหนังสือมอบฉันทะ (PDF)
                 </a>
-                <p className="text-xs text-amber-700">ดาวน์โหลด กรอกข้อมูล ลงลายมือชื่อ แล้วถ่ายรูปหรือสแกนเพื่ออัปโหลดด้านล่าง</p>
+                <p className="text-xs text-amber-700">ดาวน์โหลด กรอกข้อมูล ลงลายมือชื่อ แล้วส่งเอกสารตัวจริงตามที่อยู่ด้านล่าง</p>
                 <div className="p-3 bg-white border border-amber-300 rounded-lg text-xs text-amber-900 leading-relaxed">
-                  <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่</p>
+                  <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่ตัวจิตอาสา</p>
                   <p>คุณอัญชลี อุดร โทรศัพท์ 094-824-3082</p>
                   <p>บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่า วาเลย์ (หางดง)</p>
                   <p>ตำบลหางดง อำเภอหางดง จังหวัดเชียงใหม่ 50230</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ใบมอบฉันทะ <span className="text-red-500">*</span>
-                  </label>
-                  <FileInput
-                    file={proxyFile}
-                    onChange={setProxyFile}
-                    placeholder="อัปโหลดใบมอบฉันทะ (JPG, PNG, PDF)"
-                  />
-                </div>
               </div>
             )}
-
-            {/* ID Card */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                สำเนาบัตรประชาชน (ขีดคร่อมบัตร) <span className="text-red-500">*</span>
-              </label>
-              <FileInput
-                file={houseRegFile}
-                onChange={setHouseRegFile}
-                placeholder="อัปโหลดสำเนาบัตรประชาชน (JPG, PNG, PDF)"
-              />
-              <p className="text-xs text-gray-400 mt-1">กรุณาขีดคร่อมบัตรพร้อมเขียนกำกับว่า “ใช้สำหรับการประชุมจัดตั้งนิติบุคคลเท่านั้น” • ขนาดไฟล์ไม่เกิน 5MB</p>
-            </div>
 
             <button
               type="submit"
@@ -275,49 +251,5 @@ export default function VotePage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function FileInput({
-  file,
-  onChange,
-  placeholder,
-}: {
-  file: File | null;
-  onChange: (f: File | null) => void;
-  placeholder: string;
-}) {
-  return (
-    <label className="block cursor-pointer">
-      <div className={`flex items-center gap-3 p-3 border-2 border-dashed rounded-lg transition-colors ${
-        file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-      }`}>
-        <svg className={`w-5 h-5 ${file ? 'text-green-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d={file
-              ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              : "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"}
-          />
-        </svg>
-        <span className={`text-sm ${file ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
-          {file ? file.name : placeholder}
-        </span>
-        {file && (
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); onChange(null); }}
-            className="ml-auto text-gray-400 hover:text-red-500"
-          >
-            ✕
-          </button>
-        )}
-      </div>
-      <input
-        type="file"
-        accept=".jpg,.jpeg,.png,.webp,.pdf"
-        className="sr-only"
-        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-      />
-    </label>
   );
 }

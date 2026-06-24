@@ -23,6 +23,8 @@ const STATUS_BADGE: Record<string, string> = {
 const CHOICE_LABEL: Record<string, string> = {
   juristic: '🏢 นิติบุคคล',
   municipality: '🏛️ เทศบาล',
+  abstain: '⚪ งดออกเสียง',
+  follow_majority: '🤝 ตามข้างมาก',
 };
 
 export default function ReviewPage() {

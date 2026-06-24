@@ -37,5 +37,7 @@ export async function GET() {
     rejected,
     juristic: choiceMap['juristic'] ?? 0,
     municipality: choiceMap['municipality'] ?? 0,
+    abstain: choiceMap['abstain'] ?? 0,
+    follow_majority: choiceMap['follow_majority'] ?? 0,
   });
 }

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS ballots (
   voter_name TEXT NOT NULL,
   is_proxy BOOLEAN NOT NULL DEFAULT false,
   proxy_name TEXT,
-  choice TEXT NOT NULL CHECK (choice IN ('juristic', 'municipality')),
+  choice TEXT NOT NULL CHECK (choice IN ('juristic', 'municipality', 'abstain', 'follow_majority')),
   status TEXT NOT NULL DEFAULT 'submitted'
     CHECK (status IN ('submitted', 'verified', 'rejected')),
   reject_reason TEXT,

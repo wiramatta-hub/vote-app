@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getVoterSession } from '@/lib/session';
-import { uploadFile } from '@/lib/storage';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5MB
+const VALID_CHOICES = ['juristic', 'municipality', 'abstain', 'follow_majority'];
 
 export async function POST(req: NextRequest) {
   const session = await getVoterSession();
@@ -12,46 +10,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 });
   }
 
-  const formData = await req.formData();
-  const choice = formData.get('choice') as string;
-  const voterName = (formData.get('voter_name') as string)?.trim();
-  const isProxy = formData.get('is_proxy') === 'true';
-  const proxyName = (formData.get('proxy_name') as string)?.trim() || null;
-  const houseRegistration = formData.get('house_registration') as File | null;
-  const proxyLetter = formData.get('proxy_letter') as File | null;
+  const body = await req.json();
+  const choice = body.choice as string;
+  const voterName = (body.voter_name as string)?.trim();
+  const isProxy = body.is_proxy === true;
+  const proxyName = (body.proxy_name as string)?.trim() || null;
 
-  if (!choice || !voterName || !houseRegistration) {
+  if (!choice || !voterName) {
     return NextResponse.json(
-      { error: 'กรุณากรอกข้อมูลและแนบสำเนาบัตรประชาชน (ขีดคร่อมบัตร) ให้ครบถ้วน' },
+      { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
       { status: 400 }
     );
   }
 
-  if (!['juristic', 'municipality'].includes(choice)) {
+  if (!VALID_CHOICES.includes(choice)) {
     return NextResponse.json({ error: 'ตัวเลือกไม่ถูกต้อง' }, { status: 400 });
   }
 
-  if (isProxy && !proxyLetter) {
+  if (isProxy && !proxyName) {
     return NextResponse.json(
-      { error: 'กรณีมอบฉันทะต้องแนบใบมอบฉันทะ' },
+      { error: 'กรณีมอบฉันทะต้องระบุชื่อผู้มอบฉันทะ' },
       { status: 400 }
     );
-  }
-
-  const filesToCheck = [houseRegistration, ...(proxyLetter ? [proxyLetter] : [])];
-  for (const file of filesToCheck) {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'รองรับเฉพาะไฟล์ JPG, PNG, WebP และ PDF เท่านั้น' },
-        { status: 400 }
-      );
-    }
-    if (file.size > MAX_FILE_BYTES) {
-      return NextResponse.json(
-        { error: 'ขนาดไฟล์ต้องไม่เกิน 5MB ต่อไฟล์' },
-        { status: 400 }
-      );
-    }
   }
 
   // Prevent double voting
@@ -82,32 +62,6 @@ export async function POST(req: NextRequest) {
 
   if (!ballot) {
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง' }, { status: 500 });
-  }
-
-  const storeFile = async (file: File, docType: string) => {
-    const ext = file.name.split('.').pop() ?? 'bin';
-    const path = `ballots/${ballot.id}/${docType}.${ext}`;
-    const buffer = await file.arrayBuffer();
-    await uploadFile(path, buffer, file.type);
-    await sql`
-      INSERT INTO documents (ballot_id, doc_type, file_path, file_name)
-      VALUES (${ballot.id}, ${docType}, ${path}, ${file.name})
-    `;
-  };
-
-  try {
-    await storeFile(houseRegistration, 'id_card_owner');
-    if (isProxy && proxyLetter) {
-      await storeFile(proxyLetter, 'proxy_letter');
-    }
-  } catch {
-    // Rollback ballot if upload fails
-    await sql`DELETE FROM documents WHERE ballot_id = ${ballot.id}`;
-    await sql`DELETE FROM ballots WHERE id = ${ballot.id}`;
-    return NextResponse.json(
-      { error: 'อัปโหลดเอกสารไม่สำเร็จ กรุณาตรวจสอบขนาดและประเภทไฟล์แล้วลองอีกครั้ง' },
-      { status: 500 }
-    );
   }
 
   await sql`

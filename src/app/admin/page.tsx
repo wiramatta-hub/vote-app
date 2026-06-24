@@ -75,6 +75,8 @@ export default function AdminDashboard() {
                   {[
                     { label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic, color: 'bg-indigo-500' },
                     { label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality, color: 'bg-teal-500' },
+                    { label: 'ออกเสียงตามข้างมาก', count: results.follow_majority, color: 'bg-amber-500' },
+                    { label: 'งดออกเสียง', count: results.abstain, color: 'bg-gray-400' },
                   ].map((opt) => (
                     <div key={opt.label}>
                       <div className="flex justify-between text-sm mb-1">

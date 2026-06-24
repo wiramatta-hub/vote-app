@@ -90,9 +90,12 @@ export default function ResultsPage() {
                   {[
                     { label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic, color: 'bg-indigo-500', icon: '🏢' },
                     { label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality, color: 'bg-teal-500', icon: '🏛️' },
+                    { label: 'ออกเสียงตามข้างมาก', count: results.follow_majority, color: 'bg-amber-500', icon: '🤝' },
+                    { label: 'งดออกเสียง', count: results.abstain, color: 'bg-gray-400', icon: '⚪' },
                   ].map((opt) => {
                     const p = parseFloat(pct(opt.count, results.verified));
-                    const isWinner = opt.count === Math.max(results.juristic, results.municipality) && results.verified > 0;
+                    const isWinner = opt.count === Math.max(results.juristic, results.municipality) && results.verified > 0
+                      && (opt.label === 'จัดตั้งนิติบุคคลหมู่บ้าน' || opt.label === 'ให้เทศบาลรับภารกิจดูแล');
                     return (
                       <div key={opt.label}>
                         <div className="flex justify-between items-center mb-2">
