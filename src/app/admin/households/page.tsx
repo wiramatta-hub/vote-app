@@ -33,6 +33,8 @@ export default function HouseholdsPage() {
   const [editForm, setEditForm] = useState({ house_no: '', owner_name: '', id_card_last4: '', is_active: true });
   const [editError, setEditError] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchHouseholds = useCallback(async () => {
     setLoading(true);
@@ -83,6 +85,7 @@ export default function HouseholdsPage() {
 
   const openEdit = (h: Household) => {
     setEditError('');
+    setConfirmDelete(false);
     setEditing(h);
     setEditForm({
       house_no: h.house_no,
@@ -121,6 +124,29 @@ export default function HouseholdsPage() {
       setEditError('ไม่สามารถเชื่อมต่อได้');
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editing) return;
+    setEditError('');
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/admin/households/${editing.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error ?? 'เกิดข้อผิดพลาด');
+        return;
+      }
+      setEditing(null);
+      setConfirmDelete(false);
+      fetchHouseholds();
+    } catch {
+      setEditError('ไม่สามารถเชื่อมต่อได้');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -323,11 +349,46 @@ export default function HouseholdsPage() {
                 {editLoading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
               <button
-                onClick={() => { setEditing(null); setEditError(''); }}
+                onClick={() => { setEditing(null); setEditError(''); setConfirmDelete(false); }}
                 className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors"
               >
                 ยกเลิก
               </button>
+            </div>
+
+            {/* Delete section */}
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              {!confirmDelete ? (
+                <button
+                  onClick={() => { setConfirmDelete(true); setEditError(''); }}
+                  className="w-full py-2.5 bg-white border border-red-200 text-red-600 font-medium rounded-lg text-sm hover:bg-red-50 transition-colors"
+                >
+                  🗑️ ลบบ้านเลขที่นี้
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-red-700">
+                    ยืนยันการลบบ้านเลขที่ <span className="font-mono font-semibold">{editing.house_no}</span>?
+                    การลบจะลบมติและประวัติทั้งหมดของบ้านนี้ และไม่สามารถย้อนคืนได้
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleteLoading}
+                      className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-medium rounded-lg text-sm transition-colors"
+                    >
+                      {deleteLoading ? 'กำลังลบ...' : 'ยืนยันลบถาวร'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      disabled={deleteLoading}
+                      className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors"
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

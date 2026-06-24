@@ -72,3 +72,35 @@ export async function PATCH(
 
   return NextResponse.json({ success: true, household: updated[0] });
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getAdminSession();
+  if (!session || session.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const existing = await sql`SELECT id, house_no FROM households WHERE id = ${id} LIMIT 1`;
+  if (!existing[0]) {
+    return NextResponse.json({ error: 'ไม่พบบ้านเลขที่นี้' }, { status: 404 });
+  }
+
+  // Remove dependent records first to satisfy foreign keys
+  await sql`
+    DELETE FROM documents
+    WHERE ballot_id IN (SELECT id FROM ballots WHERE household_id = ${id})
+  `;
+  await sql`DELETE FROM ballots WHERE household_id = ${id}`;
+  await sql`DELETE FROM households WHERE id = ${id}`;
+
+  await sql`
+    INSERT INTO audit_logs (actor, action, target_id, metadata)
+    VALUES (${session.username}, 'household_deleted', ${id}, ${JSON.stringify({ house_no: existing[0].house_no })})
+  `;
+
+  return NextResponse.json({ success: true });
+}
