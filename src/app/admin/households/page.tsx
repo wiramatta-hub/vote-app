@@ -20,6 +20,27 @@ function getVoteStatus(h: Household): string {
   return 'none';
 }
 
+function splitHouseNo(houseNo: string): number[] {
+  return houseNo
+    .split('/')
+    .map((part) => Number(part))
+    .filter((part) => Number.isFinite(part));
+}
+
+function compareHouseNo(a: string, b: string): number {
+  const aParts = splitHouseNo(a);
+  const bParts = splitHouseNo(b);
+  const len = Math.max(aParts.length, bParts.length);
+
+  for (let i = 0; i < len; i++) {
+    const av = aParts[i] ?? 0;
+    const bv = bParts[i] ?? 0;
+    if (av !== bv) return av - bv;
+  }
+
+  return a.localeCompare(b, 'th', { numeric: true });
+}
+
 export default function HouseholdsPage() {
   const router = useRouter();
   const [households, setHouseholds] = useState<Household[]>([]);
@@ -41,7 +62,9 @@ export default function HouseholdsPage() {
     const res = await fetch('/api/admin/households');
     if (res.status === 401) { router.push('/admin/login'); return; }
     const data = await res.json();
-    setHouseholds(Array.isArray(data) ? data : []);
+    const rows = Array.isArray(data) ? data : [];
+    rows.sort((a, b) => compareHouseNo(a.house_no, b.house_no));
+    setHouseholds(rows);
     setLoading(false);
   }, [router]);
 
