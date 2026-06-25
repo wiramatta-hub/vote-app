@@ -11,11 +11,19 @@ const VOLUNTEER_RECEIVER = {
 };
 
 const SHIPPER_DEFAULT = {
-  phone: process.env.ISHIP_SHIPPER_PHONE ?? '0000000000',
-  district: process.env.ISHIP_SHIPPER_DISTRICT ?? 'หางดง',
-  province: process.env.ISHIP_SHIPPER_PROVINCE ?? 'เชียงใหม่',
-  postcode: process.env.ISHIP_SHIPPER_POSTCODE ?? '50230',
+  name: process.env.ISHIP_SENDER_NAME ?? 'ผู้ส่งเอกสารลงมติ',
+  phone: process.env.ISHIP_SENDER_PHONE ?? process.env.ISHIP_SHIPPER_PHONE ?? '0000000000',
+  address: process.env.ISHIP_SENDER_ADDRESS ?? null,
+  district: process.env.ISHIP_SENDER_DISTRICT ?? process.env.ISHIP_SHIPPER_DISTRICT ?? 'หางดง',
+  province: process.env.ISHIP_SENDER_PROVINCE ?? process.env.ISHIP_SHIPPER_PROVINCE ?? 'เชียงใหม่',
+  postcode: process.env.ISHIP_SENDER_POSTCODE ?? process.env.ISHIP_SHIPPER_POSTCODE ?? '50230',
 };
+
+function makeIshipEndpoint(path: string) {
+  const configuredBase = process.env.ISHIP_BASE_URL ?? 'https://api.iship.in.th/v1';
+  const base = configuredBase.replace(/\/$/, '');
+  return `${base}/${path.replace(/^\//, '')}`;
+}
 
 function findUrlDeep(value: unknown): string | null {
   if (!value) return null;
@@ -87,12 +95,15 @@ function buildReferenceNo(houseNo: string | null, senderName: string): string {
 }
 
 function buildOrderPayload(senderName: string, houseNo: string | null) {
+  const senderAddress = SHIPPER_DEFAULT.address
+    ?? (houseNo ? `บ้านเลขที่ ${houseNo}` : 'ผู้ส่งเอกสารลงมติ');
+
   return {
     reference_no: buildReferenceNo(houseNo, senderName),
     shipper: {
-      name: senderName,
+      name: senderName || SHIPPER_DEFAULT.name,
       phone: SHIPPER_DEFAULT.phone,
-      address: houseNo ? `บ้านเลขที่ ${houseNo}` : 'ผู้ส่งเอกสารลงมติ',
+      address: senderAddress,
       district: SHIPPER_DEFAULT.district,
       province: SHIPPER_DEFAULT.province,
       postcode: SHIPPER_DEFAULT.postcode,
@@ -129,20 +140,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'กรุณาระบุชื่อผู้ส่ง' }, { status: 400 });
   }
 
-  const endpoint = process.env.ISHIP_CREATE_LABEL_URL ?? 'https://api.iship.in.th/v1/orders';
-  if (!endpoint) {
-    return NextResponse.json(
-      { error: 'ยังไม่ได้ตั้งค่า ISHIP_CREATE_LABEL_URL ในระบบ' },
-      { status: 500 }
-    );
-  }
+  const endpoint = process.env.ISHIP_CREATE_LABEL_URL ?? makeIshipEndpoint('/orders');
 
   const token = process.env.ISHIP_API_TOKEN;
   const apiKey = process.env.ISHIP_API_KEY;
+  const shopId = process.env.ISHIP_SHOP_ID;
+  const username = process.env.ISHIP_USERNAME;
+  const password = process.env.ISHIP_PASSWORD;
 
-  if (!token && !apiKey) {
+  if (!token && !apiKey && !(username && password)) {
     return NextResponse.json(
-      { error: 'ยังไม่ได้ตั้งค่า ISHIP_API_TOKEN หรือ ISHIP_API_KEY ในระบบ' },
+      { error: 'ยังไม่ได้ตั้งค่า credentials ของ iShip (ISHIP_API_TOKEN / ISHIP_API_KEY / ISHIP_USERNAME+ISHIP_PASSWORD)' },
       { status: 500 }
     );
   }
@@ -150,8 +158,16 @@ export async function POST(req: NextRequest) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
   if (token) headers.Authorization = `Bearer ${token}`;
   if (apiKey) headers['x-api-key'] = apiKey;
+  if (shopId) {
+    headers['x-shop-id'] = shopId;
+    headers['x-account-id'] = shopId;
+  }
+  if (!token && username && password) {
+    headers.Authorization = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+  }
 
   const houseNo = body.house_no ?? session.houseNo ?? null;
   const payload = buildOrderPayload(senderName, houseNo);
@@ -170,7 +186,7 @@ export async function POST(req: NextRequest) {
         (data as { message?: string; error?: string }).message ||
         (data as { message?: string; error?: string }).error ||
         'iShip ไม่สามารถสร้างใบปะหน้าได้';
-      return NextResponse.json({ error: message }, { status: response.status });
+      return NextResponse.json({ error: message, raw: data }, { status: response.status });
     }
 
     if ((data as { success?: boolean }).success === false) {
