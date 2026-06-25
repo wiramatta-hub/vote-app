@@ -182,7 +182,8 @@ export default function ReviewPage() {
                           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                             <input
                               type="checkbox"
-                              checked={!!docChecks[`${ballot.id}-proxy`]}
+                              checked={ballot.status === 'verified' || !!docChecks[`${ballot.id}-proxy`]}
+                              disabled={ballot.status === 'verified'}
                               onChange={() => toggleDocCheck(`${ballot.id}-proxy`)}
                               className="w-4 h-4 text-indigo-600 rounded"
                             />
@@ -192,7 +193,8 @@ export default function ReviewPage() {
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={!!docChecks[`${ballot.id}-idcard`]}
+                            checked={ballot.status === 'verified' || !!docChecks[`${ballot.id}-idcard`]}
+                            disabled={ballot.status === 'verified'}
                             onChange={() => toggleDocCheck(`${ballot.id}-idcard`)}
                             className="w-4 h-4 text-indigo-600 rounded"
                           />
