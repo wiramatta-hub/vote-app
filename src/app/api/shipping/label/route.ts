@@ -159,8 +159,11 @@ export async function POST(req: NextRequest) {
     'Content-Type': 'application/json',
   };
 
-  if (token) headers.Authorization = `Bearer ${token}`;
-  if (apiKey) headers['x-api-key'] = apiKey;
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
+  } else if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   if (shopId) {
     headers['x-shop-id'] = shopId;
     headers['x-account-id'] = shopId;
