@@ -1,13 +1,40 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+const COUNTDOWN_END = new Date('2026-06-28T23:59:00+07:00').getTime();
+
+function formatRemaining(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return {
+    days,
+    hours: String(hours).padStart(2, '0'),
+    minutes: String(minutes).padStart(2, '0'),
+    seconds: String(seconds).padStart(2, '0'),
+  };
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ house_no: '', owner_name: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [remainingMs, setRemainingMs] = useState(() => Math.max(0, COUNTDOWN_END - Date.now()));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRemainingMs(Math.max(0, COUNTDOWN_END - Date.now()));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +72,9 @@ export default function LoginPage() {
     }
   };
 
+  const isClosed = remainingMs <= 0;
+  const remaining = formatRemaining(remainingMs);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -63,6 +93,17 @@ export default function LoginPage() {
             <p className="mt-3 inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-800 text-sm font-bold">
               กรอกอย่างใดอย่างหนึ่ง: บ้านเลขที่ หรือ ชื่อ-นามสกุล
             </p>
+
+            <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
+              <p className="text-xs font-semibold text-indigo-700">ปิดรับลงมติวันที่ 28/06/2026 เวลา 23:59 น.</p>
+              {isClosed ? (
+                <p className="mt-1 text-sm font-bold text-red-600">หมดเวลาลงมติแล้ว</p>
+              ) : (
+                <p className="mt-1 text-sm font-bold text-indigo-900">
+                  เวลาคงเหลือ {remaining.days} วัน {remaining.hours}:{remaining.minutes}:{remaining.seconds}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Error */}
