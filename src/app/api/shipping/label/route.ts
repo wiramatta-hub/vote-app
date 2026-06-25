@@ -25,6 +25,17 @@ function makeIshipEndpoint(path: string) {
   return `${base}/${path.replace(/^\//, '')}`;
 }
 
+function getErrorDetail(error: unknown): string {
+  if (!(error instanceof Error)) return 'unknown error';
+  const cause = (error as Error & { cause?: unknown }).cause as
+    | { code?: string; message?: string }
+    | undefined;
+  const causePart = cause
+    ? [cause.code, cause.message].filter(Boolean).join(': ')
+    : '';
+  return causePart ? `${error.message} (${causePart})` : error.message;
+}
+
 function findUrlDeep(value: unknown): string | null {
   if (!value) return null;
   if (typeof value === 'string') {
@@ -236,10 +247,14 @@ export async function POST(req: NextRequest) {
       raw: data,
     });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : 'unknown error';
-    console.error('iShip create label failed:', detail);
+    const detail = getErrorDetail(error);
+    console.error('iShip create label failed:', detail, 'endpoint:', endpoint);
     return NextResponse.json(
-      { error: 'เชื่อมต่อ iShip ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', detail },
+      {
+        error: 'เชื่อมต่อ iShip ไม่สำเร็จ กรุณาตรวจสอบ API endpoint/เครือข่ายกับ iShip',
+        endpoint,
+        detail,
+      },
       { status: 502 }
     );
   }
