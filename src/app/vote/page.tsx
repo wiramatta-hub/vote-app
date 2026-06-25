@@ -19,6 +19,7 @@ export default function VotePage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [creatingLabel, setCreatingLabel] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +81,42 @@ export default function VotePage() {
     await fetch('/api/auth/logout', { method: 'POST' });
     sessionStorage.removeItem('household_info');
     router.push('/login');
+  };
+
+  const handlePrintShippingLabel = async () => {
+    setError('');
+    if (!voterName.trim()) {
+      setError('กรุณากรอกชื่อ-นามสกุลผู้ส่งก่อนสร้างใบปะหน้า');
+      return;
+    }
+
+    setCreatingLabel(true);
+    try {
+      const res = await fetch('/api/shipping/label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_name: voterName.trim(),
+          house_no: household?.house_no ?? null,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? 'ไม่สามารถสร้างใบปะหน้าได้ กรุณาลองอีกครั้ง');
+        return;
+      }
+
+      if (data.print_url) {
+        window.open(data.print_url as string, '_blank', 'noopener,noreferrer');
+      } else {
+        setError('สร้างใบปะหน้าสำเร็จ แต่ไม่พบลิงก์สำหรับพิมพ์');
+      }
+    } catch {
+      setError('ไม่สามารถเชื่อมต่อบริการพิมพ์ใบปะหน้าได้');
+    } finally {
+      setCreatingLabel(false);
+    }
   };
 
   if (loading) {
@@ -221,6 +258,14 @@ export default function VotePage() {
                   2. สำเนาบัตรประชาชน ลงชื่อพร้อมขีดคร่อม &ldquo;เอกสารใช้สำหรับการประชุมจัดตั้งนิติบุคคลเท่านั้น&rdquo;<br />
                   ตามที่อยู่ด้านล่าง
                 </p>
+                <button
+                  type="button"
+                  onClick={handlePrintShippingLabel}
+                  disabled={creatingLabel}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  {creatingLabel ? 'กำลังสร้างใบปะหน้า...' : '🖨️ สร้างและพิมพ์ใบปะหน้าพัสดุ (iShip)'}
+                </button>
                 <div className="p-3 bg-white border border-amber-300 rounded-lg text-xs text-amber-900 leading-relaxed">
                   <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่จิตอาสา</p>
                   <p>คุณอัญชลี อุดร โทรศัพท์ 094-824-3082</p>
