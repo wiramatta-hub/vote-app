@@ -4,26 +4,112 @@ import { getVoterSession } from '@/lib/session';
 const VOLUNTEER_RECEIVER = {
   name: 'คุณอัญชลี อุดร',
   phone: '0948243082',
-  address_line1: 'บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่า วาเลย์ (หางดง)',
-  sub_district: 'หางดง',
+  address: 'บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่า วาเลย์ (หางดง)',
   district: 'หางดง',
   province: 'เชียงใหม่',
-  postal_code: '50230',
+  postcode: '50230',
 };
+
+const SHIPPER_DEFAULT = {
+  phone: process.env.ISHIP_SHIPPER_PHONE ?? '0000000000',
+  district: process.env.ISHIP_SHIPPER_DISTRICT ?? 'หางดง',
+  province: process.env.ISHIP_SHIPPER_PROVINCE ?? 'เชียงใหม่',
+  postcode: process.env.ISHIP_SHIPPER_POSTCODE ?? '50230',
+};
+
+function findUrlDeep(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    if (/^https?:\/\//i.test(value)) return value;
+    return null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findUrlDeep(item);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    for (const [, v] of Object.entries(obj)) {
+      const found = findUrlDeep(v);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 function extractPrintUrl(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null;
   const p = payload as Record<string, unknown>;
 
-  const direct = [p.print_url, p.label_url, p.url]
-    .find((v) => typeof v === 'string' && v.length > 0);
-  if (typeof direct === 'string') return direct;
+  const directCandidates = [
+    p.print_url,
+    p.label_url,
+    p.url,
+    p.pdf_url,
+    p.awb_url,
+  ];
+
+  for (const c of directCandidates) {
+    if (typeof c === 'string' && c.length > 0) return c;
+  }
 
   const data = (p.data && typeof p.data === 'object') ? (p.data as Record<string, unknown>) : null;
-  const nested = data ? [data.print_url, data.label_url, data.url]
-    .find((v) => typeof v === 'string' && v.length > 0) : null;
+  if (data) {
+    const nestedCandidates = [
+      data.print_url,
+      data.label_url,
+      data.url,
+      data.pdf_url,
+      data.awb_url,
+    ];
+    for (const c of nestedCandidates) {
+      if (typeof c === 'string' && c.length > 0) return c;
+    }
+  }
 
-  return typeof nested === 'string' ? nested : null;
+  return findUrlDeep(payload);
+}
+
+function buildReferenceNo(houseNo: string | null, senderName: string): string {
+  const base = (houseNo ?? senderName)
+    .replace(/\s+/g, '')
+    .replace(/[^0-9A-Za-zก-๙\/-]/g, '')
+    .slice(0, 20);
+  return `VOTE-${base}-${Date.now()}`;
+}
+
+function buildOrderPayload(senderName: string, houseNo: string | null) {
+  return {
+    reference_no: buildReferenceNo(houseNo, senderName),
+    shipper: {
+      name: senderName,
+      phone: SHIPPER_DEFAULT.phone,
+      address: houseNo ? `บ้านเลขที่ ${houseNo}` : 'ผู้ส่งเอกสารลงมติ',
+      district: SHIPPER_DEFAULT.district,
+      province: SHIPPER_DEFAULT.province,
+      postcode: SHIPPER_DEFAULT.postcode,
+    },
+    consignee: {
+      name: VOLUNTEER_RECEIVER.name,
+      phone: VOLUNTEER_RECEIVER.phone,
+      address: VOLUNTEER_RECEIVER.address,
+  district: 'หางดง',
+  province: 'เชียงใหม่',
+      postcode: VOLUNTEER_RECEIVER.postcode,
+    },
+    parcel: {
+      weight: Number(process.env.ISHIP_PARCEL_WEIGHT ?? '0.3'),
+      width: Number(process.env.ISHIP_PARCEL_WIDTH ?? '24'),
+      length: Number(process.env.ISHIP_PARCEL_LENGTH ?? '34'),
+      height: Number(process.env.ISHIP_PARCEL_HEIGHT ?? '3'),
+      declared_value: Number(process.env.ISHIP_DECLARED_VALUE ?? '0'),
+    },
+    service_code: process.env.ISHIP_SERVICE_CODE ?? 'EMS',
+    cod_amount: Number(process.env.ISHIP_COD_AMOUNT ?? '0'),
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -38,7 +124,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'กรุณาระบุชื่อผู้ส่ง' }, { status: 400 });
   }
 
-  const endpoint = process.env.ISHIP_CREATE_LABEL_URL;
+  const endpoint = process.env.ISHIP_CREATE_LABEL_URL ?? 'https://api.iship.in.th/v1/orders';
   if (!endpoint) {
     return NextResponse.json(
       { error: 'ยังไม่ได้ตั้งค่า ISHIP_CREATE_LABEL_URL ในระบบ' },
@@ -55,18 +141,8 @@ export async function POST(req: NextRequest) {
   if (token) headers.Authorization = `Bearer ${token}`;
   if (apiKey) headers['x-api-key'] = apiKey;
 
-  const payload = {
-    sender: {
-      name: senderName,
-      house_no: body.house_no ?? session.houseNo ?? null,
-    },
-    receiver: VOLUNTEER_RECEIVER,
-    reference: {
-      source: 'vote-app',
-      house_no: body.house_no ?? session.houseNo,
-      sender_name: senderName,
-    },
-  };
+  const houseNo = body.house_no ?? session.houseNo ?? null;
+  const payload = buildOrderPayload(senderName, houseNo);
 
   try {
     const response = await fetch(endpoint, {
@@ -93,7 +169,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, print_url: printUrl });
+    return NextResponse.json({ success: true, print_url: printUrl, raw: data });
   } catch {
     return NextResponse.json(
       { error: 'เชื่อมต่อ iShip ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' },
