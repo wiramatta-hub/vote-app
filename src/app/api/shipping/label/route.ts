@@ -45,8 +45,8 @@ function extractPrintUrl(payload: unknown): string | null {
   const p = payload as Record<string, unknown>;
 
   const directCandidates = [
-    p.print_url,
     p.label_url,
+    p.print_url,
     p.url,
     p.pdf_url,
     p.awb_url,
@@ -59,8 +59,8 @@ function extractPrintUrl(payload: unknown): string | null {
   const data = (p.data && typeof p.data === 'object') ? (p.data as Record<string, unknown>) : null;
   if (data) {
     const nestedCandidates = [
-      data.print_url,
       data.label_url,
+      data.print_url,
       data.url,
       data.pdf_url,
       data.awb_url,
@@ -161,6 +161,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: response.status });
     }
 
+    if ((data as { success?: boolean }).success === false) {
+      const message =
+        (data as { message?: string; error?: string }).message ||
+        (data as { message?: string; error?: string }).error ||
+        'iShip ไม่สามารถสร้างใบปะหน้าได้';
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+
     const printUrl = extractPrintUrl(data);
     if (!printUrl) {
       return NextResponse.json(
@@ -169,7 +177,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, print_url: printUrl, raw: data });
+    const summary = data as {
+      order_id?: string;
+      tracking_no?: string;
+      reference_no?: string;
+      service_code?: string;
+      shipping_cost?: number;
+      cod_fee?: number;
+      total_cost?: number;
+      status?: string;
+      created_at?: string;
+    };
+
+    return NextResponse.json({
+      success: true,
+      print_url: printUrl,
+      order_id: summary.order_id ?? null,
+      tracking_no: summary.tracking_no ?? null,
+      reference_no: summary.reference_no ?? null,
+      service_code: summary.service_code ?? null,
+      shipping_cost: summary.shipping_cost ?? null,
+      cod_fee: summary.cod_fee ?? null,
+      total_cost: summary.total_cost ?? null,
+      status: summary.status ?? null,
+      created_at: summary.created_at ?? null,
+      raw: data,
+    });
   } catch {
     return NextResponse.json(
       { error: 'เชื่อมต่อ iShip ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' },
