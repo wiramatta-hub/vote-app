@@ -73,6 +73,11 @@ function extractPrintUrl(payload: unknown): string | null {
   return findUrlDeep(payload);
 }
 
+function buildFallbackLabelUrl(orderId: string | undefined): string | null {
+  if (!orderId || orderId.trim().length === 0) return null;
+  return `https://api.iship.in.th/labels/${encodeURIComponent(orderId)}.pdf`;
+}
+
 function buildReferenceNo(houseNo: string | null, senderName: string): string {
   const base = (houseNo ?? senderName)
     .replace(/\s+/g, '')
@@ -135,6 +140,13 @@ export async function POST(req: NextRequest) {
   const token = process.env.ISHIP_API_TOKEN;
   const apiKey = process.env.ISHIP_API_KEY;
 
+  if (!token && !apiKey) {
+    return NextResponse.json(
+      { error: 'ยังไม่ได้ตั้งค่า ISHIP_API_TOKEN หรือ ISHIP_API_KEY ในระบบ' },
+      { status: 500 }
+    );
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -166,13 +178,14 @@ export async function POST(req: NextRequest) {
         (data as { message?: string; error?: string }).message ||
         (data as { message?: string; error?: string }).error ||
         'iShip ไม่สามารถสร้างใบปะหน้าได้';
-      return NextResponse.json({ error: message }, { status: 502 });
+      return NextResponse.json({ error: message, raw: data }, { status: 400 });
     }
 
-    const printUrl = extractPrintUrl(data);
+    const orderId = (data as { order_id?: string }).order_id;
+    const printUrl = extractPrintUrl(data) || buildFallbackLabelUrl(orderId);
     if (!printUrl) {
       return NextResponse.json(
-        { error: 'iShip ตอบกลับสำเร็จ แต่ไม่พบลิงก์ใบปะหน้า' },
+        { error: 'iShip ตอบกลับสำเร็จ แต่ไม่พบลิงก์ใบปะหน้า', raw: data },
         { status: 502 }
       );
     }
@@ -203,9 +216,11 @@ export async function POST(req: NextRequest) {
       created_at: summary.created_at ?? null,
       raw: data,
     });
-  } catch {
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'unknown error';
+    console.error('iShip create label failed:', detail);
     return NextResponse.json(
-      { error: 'เชื่อมต่อ iShip ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' },
+      { error: 'เชื่อมต่อ iShip ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', detail },
       { status: 502 }
     );
   }
