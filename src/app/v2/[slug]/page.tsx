@@ -125,6 +125,21 @@ export default function V2AccountPage() {
                   </div>
                 )}
               </div>
+
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={`/v2/${slug}/vote`}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  ไปลงคะแนน
+                </a>
+                <a
+                  href={`/v2/${slug}/results`}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  ดูผลคะแนน
+                </a>
+              </div>
             </div>
           )}
         </div>
