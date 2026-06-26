@@ -35,13 +35,13 @@ export default function V2LandingPage() {
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center space-y-8 max-w-3xl mx-auto">
           <div className="space-y-4">
-            <h1 className="text-5xl sm:text-6xl font-bold text-slate-900">
+            <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 leading-tight">
               ระบบเลือกตั้ง
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                 ออนไลน์ที่ง่าย
               </span>
             </h1>
-            <p className="text-xl text-slate-600 leading-relaxed">
+            <p className="text-xl text-slate-600 leading-loose">
               สำหรับโรงเรียน หมู่บ้าน และองค์กร ที่ต้องการจัดการการลงมติอย่างสมัยใหม่ ปลอดภัย และโปร่งใส
             </p>
           </div>
@@ -71,7 +71,7 @@ export default function V2LandingPage() {
               <span className="text-2xl">📝</span>
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">ตั้งค่าได้เอง</h3>
-            <p className="text-slate-600">
+            <p className="text-slate-600 leading-relaxed">
               เพิ่มหมายเลข ชื่อผู้สมัคร และตั้งเวลาการเลือกตั้งโดยไม่ต้องติดต่อใครเลย
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function V2LandingPage() {
               <span className="text-2xl">🔒</span>
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">ปลอดภัย</h3>
-            <p className="text-slate-600">
+            <p className="text-slate-600 leading-relaxed">
               ป้องกันการโหวตซ้ำ เก็บข้อมูลแบบเข้ารหัส และมีประวัติการลงคะแนนชัดเจน
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function V2LandingPage() {
               <span className="text-2xl">📊</span>
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">ผลคะแนนเรียลไทม์</h3>
-            <p className="text-slate-600">
+            <p className="text-slate-600 leading-relaxed">
               ดูผลคะแนนอัปเดตอยู่ตลอด พร้อมกราฟและสถิติแบบ live
             </p>
           </div>
@@ -101,8 +101,8 @@ export default function V2LandingPage() {
       {/* How it Works */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">วิธีใช้งาน</h2>
-          <p className="text-lg text-slate-600">เพียง 3 ขั้นตอนง่ายๆ</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-4 leading-snug">วิธีใช้งาน</h2>
+          <p className="text-lg text-slate-600 leading-relaxed">เพียง 3 ขั้นตอนง่ายๆ</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -112,7 +112,7 @@ export default function V2LandingPage() {
                 1
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">สมัครใช้งาน</h3>
-              <p className="text-slate-600 text-center">
+              <p className="text-slate-600 text-center leading-relaxed">
                 สมัครผ่านหน้า Register พร้อมตั้ง username และ password ของตัวเอง
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function V2LandingPage() {
                 2
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">ตั้งค่าการเลือกตั้ง</h3>
-              <p className="text-slate-600 text-center">
+              <p className="text-slate-600 text-center leading-relaxed">
                 เพิ่มหมายเลข ชื่อผู้สมัคร และกำหนดเวลา
               </p>
             </div>
@@ -136,7 +136,7 @@ export default function V2LandingPage() {
                 3
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">แชร์และเริ่มโหวต</h3>
-              <p className="text-slate-600 text-center">
+              <p className="text-slate-600 text-center leading-relaxed">
                 คัดลอกลิงค์และแชร์ให้ผู้มีสิทธิ์ลงคะแนน
               </p>
             </div>
@@ -147,8 +147,8 @@ export default function V2LandingPage() {
       {/* CTA Section */}
       <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl mb-20 text-white">
         <div className="text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-bold">พร้อมที่จะเริ่มต้นหรือยัง?</h2>
-          <p className="text-lg text-blue-100 max-w-xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold leading-snug">พร้อมที่จะเริ่มต้นหรือยัง?</h2>
+          <p className="text-lg text-blue-100 max-w-xl mx-auto leading-relaxed">
             ไม่มีค่าใช้จ่าย ไม่ต้องลงทะเบียนบัตรเครดิต เพียงแค่สมัครและใช้งานได้เลย
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
