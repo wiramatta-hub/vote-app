@@ -38,6 +38,17 @@ const TYPE_LABELS: Record<string, string> = {
   organization: 'องค์กร',
 };
 
+async function adminFetch(url: string, init?: RequestInit): Promise<Response | null> {
+  const res = await fetch(url, init);
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/v2/admin/login';
+    }
+    return null;
+  }
+  return res;
+}
+
 export default function V2AdminDashboard() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -80,11 +91,12 @@ export default function V2AdminDashboard() {
 
   async function createAccount() {
     if (!newAccountName.trim()) return;
-    const res = await fetch('/api/v2/admin/accounts', {
+    const res = await adminFetch('/api/v2/admin/accounts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newAccountName.trim(), account_type: newAccountType }),
     });
+    if (!res) return;
     const json = await res.json();
     if (!res.ok) {
       alert(json.error ?? 'สร้างบัญชีไม่สำเร็จ');
@@ -96,7 +108,8 @@ export default function V2AdminDashboard() {
 
   async function deleteAccount(id: string) {
     if (!confirm('ลบบัญชีนี้พร้อมการเลือกตั้งและผู้สมัครทั้งหมด?')) return;
-    const res = await fetch(`/api/v2/admin/accounts/${id}`, { method: 'DELETE' });
+    const res = await adminFetch(`/api/v2/admin/accounts/${id}`, { method: 'DELETE' });
+    if (!res) return;
     if (!res.ok) {
       const json = await res.json();
       alert(json.error ?? 'ลบไม่สำเร็จ');
@@ -106,12 +119,12 @@ export default function V2AdminDashboard() {
   }
 
   async function toggleAccount(acc: Account) {
-    const res = await fetch(`/api/v2/admin/accounts/${acc.id}`, {
+    const res = await adminFetch(`/api/v2/admin/accounts/${acc.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: acc.name, is_active: !acc.is_active }),
     });
-    if (res.ok) load();
+    if (res && res.ok) load();
   }
 
   if (loading) {
@@ -206,11 +219,12 @@ function AccountCard({
 
   async function createElection() {
     if (!electionTitle.trim()) return;
-    const res = await fetch('/api/v2/admin/elections', {
+    const res = await adminFetch('/api/v2/admin/elections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ account_id: account.id, title: electionTitle.trim(), is_active: true }),
     });
+    if (!res) return;
     const json = await res.json();
     if (!res.ok) {
       alert(json.error ?? 'สร้างการเลือกตั้งไม่สำเร็จ');
@@ -285,7 +299,7 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
   const [candName, setCandName] = useState('');
 
   async function toggleElection() {
-    await fetch(`/api/v2/admin/elections/${election.id}`, {
+    const res = await adminFetch(`/api/v2/admin/elections/${election.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -296,12 +310,14 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
         is_active: !election.is_active,
       }),
     });
+    if (!res) return;
     onChanged();
   }
 
   async function deleteElection() {
     if (!confirm('ลบการเลือกตั้งนี้พร้อมผู้สมัครทั้งหมด?')) return;
-    await fetch(`/api/v2/admin/elections/${election.id}`, { method: 'DELETE' });
+    const res = await adminFetch(`/api/v2/admin/elections/${election.id}`, { method: 'DELETE' });
+    if (!res) return;
     onChanged();
   }
 
@@ -311,7 +327,7 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
       alert('กรอกหมายเลขและชื่อผู้สมัคร');
       return;
     }
-    const res = await fetch('/api/v2/admin/candidates', {
+    const res = await adminFetch('/api/v2/admin/candidates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -321,6 +337,7 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
         display_order: no,
       }),
     });
+    if (!res) return;
     const json = await res.json();
     if (!res.ok) {
       alert(json.error ?? 'เพิ่มผู้สมัครไม่สำเร็จ');
@@ -333,7 +350,8 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
 
   async function deleteCandidate(id: string) {
     if (!confirm('ลบผู้สมัครคนนี้?')) return;
-    await fetch(`/api/v2/admin/candidates/${id}`, { method: 'DELETE' });
+    const res = await adminFetch(`/api/v2/admin/candidates/${id}`, { method: 'DELETE' });
+    if (!res) return;
     onChanged();
   }
 
