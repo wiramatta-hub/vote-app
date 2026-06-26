@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getV2User } from '@/lib/v2';
+
+async function getOwnedCandidate(accountId: string, candidateId: string) {
+  const rows = await sql`
+    SELECT c.id, c.election_id
+    FROM v2_candidates c
+    JOIN v2_elections e ON e.id = c.election_id
+    WHERE c.id = ${candidateId} AND e.account_id = ${accountId}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getV2User();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id } = await params;
+  const current = await getOwnedCandidate(session.accountId, id);
+  if (!current) return NextResponse.json({ error: 'ไม่พบผู้สมัคร' }, { status: 404 });
+
+  const body = (await req.json().catch(() => ({}))) as {
+    candidate_no?: number;
+    candidate_name?: string;
+    display_order?: number;
+    is_active?: boolean;
+  };
+
+  const candidateName = body.candidate_name?.trim();
+  const candidateNo = Number(body.candidate_no);
+  if (!candidateName || !Number.isFinite(candidateNo)) {
+    return NextResponse.json({ error: 'กรุณาระบุหมายเลขและชื่อผู้สมัคร' }, { status: 400 });
+  }
+
+  const dup = await sql`
+    SELECT id FROM v2_candidates
+    WHERE election_id = ${current.election_id} AND candidate_no = ${candidateNo} AND id <> ${id}
+    LIMIT 1
+  `;
+  if (dup[0]) {
+    return NextResponse.json(
+      { error: `หมายเลข ${candidateNo} มีอยู่แล้วในการเลือกตั้งนี้` },
+      { status: 409 }
+    );
+  }
+
+  const displayOrder = Number.isFinite(Number(body.display_order))
+    ? Number(body.display_order)
+    : candidateNo;
+  const isActive = typeof body.is_active === 'boolean' ? body.is_active : true;
+
+  const rows = await sql`
+    UPDATE v2_candidates
+    SET candidate_no = ${candidateNo}, candidate_name = ${candidateName},
+        display_order = ${displayOrder}, is_active = ${isActive}
+    WHERE id = ${id}
+    RETURNING id, election_id, candidate_no, candidate_name, display_order, is_active
+  `;
+
+  return NextResponse.json({ success: true, candidate: rows[0] });
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getV2User();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id } = await params;
+  const current = await getOwnedCandidate(session.accountId, id);
+  if (!current) return NextResponse.json({ error: 'ไม่พบผู้สมัคร' }, { status: 404 });
+
+  await sql`DELETE FROM v2_candidates WHERE id = ${id}`;
+  return NextResponse.json({ success: true });
+}

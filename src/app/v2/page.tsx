@@ -47,40 +47,45 @@ export default function V2LandingPage() {
       <div className="mx-auto w-full max-w-3xl space-y-4 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-blue-700">V2 Workspace</p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-900">ระบบ Multi-User (แยกจากระบบเดิม)</h1>
+            <p className="text-sm font-semibold text-blue-700">ระบบเลือกตั้งออนไลน์</p>
+            <h1 className="mt-2 text-2xl font-bold text-slate-900">สร้างการเลือกตั้งของหน่วยงานคุณเอง</h1>
             <p className="mt-3 text-slate-600">
-              พื้นที่นี้ใช้พัฒนาระบบหลายบัญชีโดยแยก URL และ API ออกจากของเดิมอย่างชัดเจน
+              โรงเรียน หมู่บ้าน หรือองค์กร สมัครใช้งานได้เอง ตั้งหมายเลขและชื่อผู้สมัครเอง แล้วแชร์ลิงก์ให้คนมาโหวต
             </p>
           </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
           <a
-            href="/v2/admin"
-            className="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
+            href="/v2/register"
+            className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            ผู้ดูแลระบบ
+            สมัครใช้งาน
+          </a>
+          <a
+            href="/v2/login"
+            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            เข้าสู่ระบบ
           </a>
         </div>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          เส้นทางเดิมยังคงใช้งานเหมือนเดิม: /login, /vote, /admin
-        </div>
-
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-          เส้นทางระบบใหม่: /v2/* และ API ใต้ /api/v2/*
+          สมัครเสร็จเข้าใช้งานได้ทันที — แต่ละหน่วยงานมีหน้าจัดการและลิงก์โหวตเป็นของตัวเอง
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-800">บัญชีที่พร้อมใช้งาน (V2)</p>
+          <p className="text-sm font-semibold text-slate-800">หน่วยงานที่เปิดให้โหวตอยู่</p>
 
           {loading ? (
-            <p className="mt-2 text-sm text-slate-600">กำลังโหลดรายการบัญชี...</p>
+            <p className="mt-2 text-sm text-slate-600">กำลังโหลดรายการ...</p>
           ) : !data?.ok ? (
             <div className="mt-2 space-y-1">
               <p className="text-sm text-red-700">{data?.error ?? 'เกิดข้อผิดพลาด'}</p>
               {data?.hint && <p className="text-sm text-amber-700">{data.hint}</p>}
             </div>
           ) : !data.accounts || data.accounts.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">ยังไม่มีบัญชีในระบบ V2</p>
+            <p className="mt-2 text-sm text-slate-500">ยังไม่มีหน่วยงานในระบบ</p>
           ) : (
             <div className="mt-3 space-y-2">
               {data.accounts.map((account) => (
@@ -95,6 +100,12 @@ export default function V2LandingPage() {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="pt-2 text-center">
+          <a href="/v2/admin/login" className="text-xs text-slate-400 hover:text-slate-600">
+            สำหรับผู้ดูแลระบบส่วนกลาง
+          </a>
         </div>
       </div>
     </div>
