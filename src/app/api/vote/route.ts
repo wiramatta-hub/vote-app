@@ -10,6 +10,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 });
   }
 
+  const configs = await sql`
+    SELECT starts_at, ends_at, is_active
+    FROM vote_config
+    ORDER BY created_at ASC
+    LIMIT 1
+  `;
+  const config = configs[0];
+  if (!config || !config.is_active) {
+    return NextResponse.json({ error: 'ยังไม่เปิดให้ลงมติในขณะนี้' }, { status: 403 });
+  }
+
+  const now = Date.now();
+  const startsAt = config.starts_at ? new Date(config.starts_at).getTime() : null;
+  const endsAt = config.ends_at ? new Date(config.ends_at).getTime() : null;
+
+  if (startsAt && now < startsAt) {
+    return NextResponse.json({ error: 'ยังไม่ถึงเวลาเริ่มลงมติ' }, { status: 403 });
+  }
+  if (endsAt && now > endsAt) {
+    return NextResponse.json({ error: 'หมดเวลาลงมติแล้ว' }, { status: 403 });
+  }
+
   const body = await req.json();
   const choice = body.choice as string;
   const voterName = (body.voter_name as string)?.trim();

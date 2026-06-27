@@ -20,6 +20,12 @@ export default function VotePage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const startsAtMs = config?.starts_at ? new Date(config.starts_at).getTime() : null;
+  const endsAtMs = config?.ends_at ? new Date(config.ends_at).getTime() : null;
+  const now = Date.now();
+  const beforeStart = !!startsAtMs && now < startsAtMs;
+  const afterEnd = !!endsAtMs && now > endsAtMs;
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
@@ -45,6 +51,15 @@ export default function VotePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (beforeStart) {
+      setError('ยังไม่ถึงเวลาเริ่มลงมติ');
+      return;
+    }
+    if (afterEnd) {
+      setError('หมดเวลาลงมติแล้ว');
+      return;
+    }
 
     if (!choice) { setError('กรุณาเลือกมติ'); return; }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
@@ -93,6 +108,17 @@ export default function VotePage() {
   const optionA = config?.option_a_label ?? 'จัดตั้งนิติบุคคลหมู่บ้าน';
   const optionB = config?.option_b_label ?? 'ให้เทศบาลรับภารกิจดูแล';
 
+  const formatDateThai = (value: string | null | undefined) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleString('th-TH', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 px-4">
       <div className="max-w-xl mx-auto">
@@ -123,6 +149,13 @@ export default function VotePage() {
 
         {/* Vote Form */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="mb-4 rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-sm">
+            <p className="font-semibold text-indigo-800">ช่วงเวลาลงมติ</p>
+            <p className="mt-1 text-indigo-700">
+              {formatDateThai(config?.starts_at)} - {formatDateThai(config?.ends_at)}
+            </p>
+          </div>
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
@@ -246,10 +279,10 @@ export default function VotePage() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || beforeStart || afterEnd}
               className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold rounded-xl transition-colors"
             >
-              {submitting ? 'กำลังส่งมติ...' : 'ยืนยันและส่งมติ'}
+              {submitting ? 'กำลังส่งมติ...' : beforeStart ? 'ยังไม่ถึงเวลาเริ่มลงมติ' : afterEnd ? 'หมดเวลาลงมติแล้ว' : 'ยืนยันและส่งมติ'}
             </button>
           </form>
         </div>
