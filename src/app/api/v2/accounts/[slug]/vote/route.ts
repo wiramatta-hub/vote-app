@@ -19,7 +19,7 @@ export async function POST(
 
   if (!candidateId || !voterName) {
     return NextResponse.json(
-      { error: 'กรุณาเลือกผู้สมัครและกรอกชื่อผู้ลงคะแนน' },
+      { error: 'กรุณาเลือกผู้สมัครและกรอกข้อมูลผู้ลงคะแนน (ชื่อ-นามสกุล หรือ รหัส)' },
       { status: 400 }
     );
   }
@@ -68,7 +68,7 @@ export async function POST(
       LIMIT 1
     `;
     if (existing[0]) {
-      return NextResponse.json({ error: 'ชื่อนี้ลงคะแนนไปแล้ว' }, { status: 409 });
+      return NextResponse.json({ error: 'ข้อมูลผู้ลงคะแนนนี้ลงคะแนนไปแล้ว' }, { status: 409 });
     }
 
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip');

@@ -12,10 +12,48 @@ type Candidate = {
 type DetailResponse = {
   ok: boolean;
   error?: string;
-  account?: { slug: string; name: string };
+  account?: {
+    slug: string;
+    name: string;
+    account_type: 'village' | 'school' | 'organization';
+  };
   election?: { id: string; title: string; description: string | null } | null;
   candidates?: Candidate[];
 };
+
+function getVoterFieldMeta(accountType?: 'village' | 'school' | 'organization') {
+  if (accountType === 'school') {
+    return {
+      label: 'ผู้ลงคะแนน (ชื่อ-นามสกุล หรือ รหัสประจำตัวนักเรียน)',
+      placeholder: 'เช่น สมชาย ใจดี หรือ 65123456',
+      help: 'กรอกได้ทั้งชื่อ-นามสกุล หรือรหัสประจำตัวนักเรียน',
+      requiredText: 'ข้อมูลผู้ลงคะแนน',
+    };
+  }
+  if (accountType === 'organization') {
+    return {
+      label: 'ผู้ลงคะแนน (ชื่อ-นามสกุล หรือ รหัสพนักงาน)',
+      placeholder: 'เช่น สมชาย ใจดี หรือ EMP-1024',
+      help: 'กรอกได้ทั้งชื่อ-นามสกุล หรือรหัสพนักงาน',
+      requiredText: 'ข้อมูลผู้ลงคะแนน',
+    };
+  }
+  if (accountType === 'village') {
+    return {
+      label: 'ผู้ลงคะแนน (ชื่อ-นามสกุล หรือ เลขที่บ้าน)',
+      placeholder: 'เช่น สมชาย ใจดี หรือ 99/12',
+      help: 'กรอกได้ทั้งชื่อ-นามสกุล หรือเลขที่บ้าน',
+      requiredText: 'ข้อมูลผู้ลงคะแนน',
+    };
+  }
+
+  return {
+    label: 'ผู้ลงคะแนน (ชื่อ-นามสกุล หรือ รหัส)',
+    placeholder: 'เช่น สมชาย ใจดี หรือ รหัสผู้ลงคะแนน',
+    help: 'กรอกได้ทั้งชื่อ-นามสกุล หรือรหัสผู้ลงคะแนน',
+    requiredText: 'ข้อมูลผู้ลงคะแนน',
+  };
+}
 
 export default function V2VotePage() {
   const params = useParams<{ slug: string }>();
@@ -28,6 +66,7 @@ export default function V2VotePage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const voterField = getVoterFieldMeta(data?.account?.account_type);
 
   useEffect(() => {
     if (!slug) return;
@@ -52,7 +91,7 @@ export default function V2VotePage() {
   async function handleSubmit() {
     setError(null);
     if (!voterName.trim()) {
-      setError('กรุณากรอกชื่อผู้ลงคะแนน');
+      setError(`กรุณากรอก${voterField.requiredText}`);
       return;
     }
     if (!selected) {
@@ -104,14 +143,15 @@ export default function V2VotePage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-800">ชื่อผู้ลงคะแนน</label>
+                <label className="text-sm font-semibold text-slate-800">{voterField.label}</label>
                 <input
                   type="text"
                   value={voterName}
                   onChange={(e) => setVoterName(e.target.value)}
-                  placeholder="กรอกชื่อ-นามสกุล"
+                  placeholder={voterField.placeholder}
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 />
+                <p className="mt-1 text-xs text-slate-500">{voterField.help}</p>
               </div>
 
               <div className="space-y-2">
