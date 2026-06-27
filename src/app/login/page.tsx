@@ -95,7 +95,7 @@ export default function LoginPage() {
             </p>
 
             <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
-              <p className="text-xs font-semibold text-indigo-700">เปิดลงมติวันที่ 28 มิถุนายน 2569 เวลา 10:00 - 23:59 น.</p>
+              <p className="text-xs font-semibold text-indigo-700">เปิดลงมติวันที่ 28 มิถุนายน 2569 เวลา 08:00 - 23:59 น.</p>
               {isClosed ? (
                 <p className="mt-1 text-sm font-bold text-red-600">หมดเวลาลงมติแล้ว</p>
               ) : (
