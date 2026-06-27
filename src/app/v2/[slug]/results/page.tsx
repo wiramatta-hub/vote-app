@@ -7,6 +7,7 @@ type CandidateResult = {
   id: string;
   candidate_no: number;
   candidate_name: string;
+  candidate_image_url: string | null;
   votes: number;
 };
 
@@ -87,13 +88,26 @@ export default function V2ResultsPage() {
                     return (
                       <div key={c.id} className="rounded-lg border border-slate-200 p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-slate-900">
-                            {idx + 1}. หมายเลข {c.candidate_no} {c.candidate_name}
-                            {isLeader && (
-                              <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                                นำ
+                          <span className="flex items-center gap-3 text-sm font-semibold text-slate-900">
+                            {c.candidate_image_url ? (
+                              <img
+                                src={c.candidate_image_url}
+                                alt={c.candidate_name}
+                                className="h-10 w-10 rounded-full border border-slate-200 object-cover"
+                              />
+                            ) : (
+                              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xs font-bold text-slate-500">
+                                {c.candidate_no}
                               </span>
                             )}
+                            <span>
+                              {idx + 1}. หมายเลข {c.candidate_no} {c.candidate_name}
+                              {isLeader && (
+                                <span className="ml-2 rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                                  นำ
+                                </span>
+                              )}
+                            </span>
                           </span>
                           <span className="text-sm font-semibold text-slate-700">
                             {c.votes} ({pct}%)

@@ -6,6 +6,7 @@ type CandidateResult = {
   id: string;
   candidate_no: number;
   candidate_name: string;
+  candidate_image_url: string | null;
   votes: number;
 };
 
@@ -44,12 +45,12 @@ export async function GET(
     }
 
     const rows = (await sql`
-      SELECT c.id, c.candidate_no, c.candidate_name,
+      SELECT c.id, c.candidate_no, c.candidate_name, c.candidate_image_url,
              COUNT(b.id)::int AS votes
       FROM v2_candidates c
       LEFT JOIN v2_ballots b ON b.candidate_id = c.id
       WHERE c.election_id = ${election.id} AND c.is_active = true
-      GROUP BY c.id, c.candidate_no, c.candidate_name
+      GROUP BY c.id, c.candidate_no, c.candidate_name, c.candidate_image_url
       ORDER BY c.display_order ASC, c.candidate_no ASC
     `) as CandidateResult[];
 
