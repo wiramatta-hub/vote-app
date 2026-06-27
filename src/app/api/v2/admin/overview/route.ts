@@ -25,6 +25,7 @@ type CandidateRow = {
   election_id: string;
   candidate_no: number;
   candidate_name: string;
+  candidate_image_url: string | null;
   display_order: number;
   is_active: boolean;
 };
@@ -47,7 +48,7 @@ export async function GET() {
     `) as ElectionRow[];
 
     const candidates = (await sql`
-      SELECT id, election_id, candidate_no, candidate_name, display_order, is_active
+      SELECT id, election_id, candidate_no, candidate_name, candidate_image_url, display_order, is_active
       FROM v2_candidates
       ORDER BY display_order ASC, candidate_no ASC
     `) as CandidateRow[];

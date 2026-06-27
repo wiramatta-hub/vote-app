@@ -7,6 +7,7 @@ type Candidate = {
   id: string;
   candidate_no: number;
   candidate_name: string;
+  candidate_image_url: string | null;
 };
 
 type DetailResponse = {
@@ -170,7 +171,20 @@ export default function V2VotePage() {
                           : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
-                      <span className="text-sm font-semibold text-slate-900">หมายเลข {c.candidate_no}</span>
+                      <span className="flex items-center gap-3">
+                        {c.candidate_image_url ? (
+                          <img
+                            src={c.candidate_image_url}
+                            alt={c.candidate_name}
+                            className="h-10 w-10 rounded-full border border-slate-200 object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xs font-bold text-slate-500">
+                            {c.candidate_no}
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold text-slate-900">หมายเลข {c.candidate_no}</span>
+                      </span>
                       <span className="text-sm text-slate-700">{c.candidate_name}</span>
                     </button>
                   ))

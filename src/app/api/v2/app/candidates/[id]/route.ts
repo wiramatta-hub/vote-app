@@ -27,11 +27,13 @@ export async function PATCH(
   const body = (await req.json().catch(() => ({}))) as {
     candidate_no?: number;
     candidate_name?: string;
+    candidate_image_url?: string;
     display_order?: number;
     is_active?: boolean;
   };
 
   const candidateName = body.candidate_name?.trim();
+  const candidateImageUrl = body.candidate_image_url?.trim() || null;
   const candidateNo = Number(body.candidate_no);
   if (!candidateName || !Number.isFinite(candidateNo)) {
     return NextResponse.json({ error: 'กรุณาระบุหมายเลขและชื่อผู้สมัคร' }, { status: 400 });
@@ -57,9 +59,10 @@ export async function PATCH(
   const rows = await sql`
     UPDATE v2_candidates
     SET candidate_no = ${candidateNo}, candidate_name = ${candidateName},
-        display_order = ${displayOrder}, is_active = ${isActive}
+      candidate_image_url = ${candidateImageUrl},
+      display_order = ${displayOrder}, is_active = ${isActive}
     WHERE id = ${id}
-    RETURNING id, election_id, candidate_no, candidate_name, display_order, is_active
+    RETURNING id, election_id, candidate_no, candidate_name, candidate_image_url, display_order, is_active
   `;
 
   return NextResponse.json({ success: true, candidate: rows[0] });

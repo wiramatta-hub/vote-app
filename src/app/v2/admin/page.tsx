@@ -8,6 +8,7 @@ type Candidate = {
   election_id: string;
   candidate_no: number;
   candidate_name: string;
+  candidate_image_url: string | null;
   display_order: number;
   is_active: boolean;
 };
@@ -297,6 +298,7 @@ function AccountCard({
 function ElectionBlock({ election, onChanged }: { election: Election; onChanged: () => void }) {
   const [candNo, setCandNo] = useState('');
   const [candName, setCandName] = useState('');
+  const [candImageUrl, setCandImageUrl] = useState('');
 
   async function toggleElection() {
     const res = await adminFetch(`/api/v2/admin/elections/${election.id}`, {
@@ -334,6 +336,7 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
         election_id: election.id,
         candidate_no: no,
         candidate_name: candName.trim(),
+        candidate_image_url: candImageUrl.trim() || undefined,
         display_order: no,
       }),
     });
@@ -345,6 +348,7 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
     }
     setCandNo('');
     setCandName('');
+    setCandImageUrl('');
     onChanged();
   }
 
@@ -391,8 +395,21 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
               key={c.id}
               className="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5"
             >
-              <span className="text-sm text-slate-800">
-                หมายเลข {c.candidate_no} — {c.candidate_name}
+              <span className="flex items-center gap-2 text-sm text-slate-800">
+                {c.candidate_image_url ? (
+                  <img
+                    src={c.candidate_image_url}
+                    alt={c.candidate_name}
+                    className="h-7 w-7 rounded-full border border-slate-200 object-cover"
+                  />
+                ) : (
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
+                    {c.candidate_no}
+                  </span>
+                )}
+                <span>
+                  หมายเลข {c.candidate_no} — {c.candidate_name}
+                </span>
               </span>
               <button
                 type="button"
@@ -420,6 +437,13 @@ function ElectionBlock({ election, onChanged }: { election: Election; onChanged:
           onChange={(e) => setCandName(e.target.value)}
           placeholder="ชื่อผู้สมัคร"
           className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+        />
+        <input
+          type="url"
+          value={candImageUrl}
+          onChange={(e) => setCandImageUrl(e.target.value)}
+          placeholder="ลิงก์รูปโปรไฟล์ (ไม่บังคับ)"
+          className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
         />
         <button
           type="button"

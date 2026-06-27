@@ -10,11 +10,13 @@ export async function POST(req: NextRequest) {
     election_id?: string;
     candidate_no?: number;
     candidate_name?: string;
+    candidate_image_url?: string;
     display_order?: number;
   };
 
   const electionId = body.election_id?.trim();
   const candidateName = body.candidate_name?.trim();
+  const candidateImageUrl = body.candidate_image_url?.trim() || null;
   const candidateNo = Number(body.candidate_no);
 
   if (!electionId || !candidateName || !Number.isFinite(candidateNo)) {
@@ -47,9 +49,23 @@ export async function POST(req: NextRequest) {
     : candidateNo;
 
   const rows = await sql`
-    INSERT INTO v2_candidates (election_id, candidate_no, candidate_name, display_order, is_active)
-    VALUES (${electionId}, ${candidateNo}, ${candidateName}, ${displayOrder}, true)
-    RETURNING id, election_id, candidate_no, candidate_name, display_order, is_active
+    INSERT INTO v2_candidates (
+      election_id,
+      candidate_no,
+      candidate_name,
+      candidate_image_url,
+      display_order,
+      is_active
+    )
+    VALUES (
+      ${electionId},
+      ${candidateNo},
+      ${candidateName},
+      ${candidateImageUrl},
+      ${displayOrder},
+      true
+    )
+    RETURNING id, election_id, candidate_no, candidate_name, candidate_image_url, display_order, is_active
   `;
 
   return NextResponse.json({ success: true, candidate: rows[0] });

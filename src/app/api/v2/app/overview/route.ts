@@ -21,7 +21,7 @@ export async function GET() {
     `;
 
     const candidates = await sql`
-      SELECT c.id, c.election_id, c.candidate_no, c.candidate_name, c.display_order, c.is_active
+      SELECT c.id, c.election_id, c.candidate_no, c.candidate_name, c.candidate_image_url, c.display_order, c.is_active
       FROM v2_candidates c
       JOIN v2_elections e ON e.id = c.election_id
       WHERE e.account_id = ${session.accountId}

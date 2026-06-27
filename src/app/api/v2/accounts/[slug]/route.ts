@@ -20,6 +20,7 @@ type CandidateRow = {
   id: string;
   candidate_no: number;
   candidate_name: string;
+  candidate_image_url: string | null;
 };
 
 function isMissingTableError(error: unknown): boolean {
@@ -62,7 +63,7 @@ export async function GET(
 
     const candidates = election
       ? ((await sql`
-          SELECT id, candidate_no, candidate_name
+          SELECT id, candidate_no, candidate_name, candidate_image_url
           FROM v2_candidates
           WHERE election_id = ${election.id} AND is_active = true
           ORDER BY display_order ASC, candidate_no ASC
