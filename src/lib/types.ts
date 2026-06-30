@@ -73,4 +73,8 @@ export interface VoteResults {
   municipality: number;
   abstain: number;
   follow_majority: number;
+  juristic_pending: number;
+  municipality_pending: number;
+  abstain_pending: number;
+  follow_majority_pending: number;
 }

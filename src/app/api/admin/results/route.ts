@@ -17,13 +17,17 @@ export async function GET() {
   for (const row of statusRows) statusMap[row.status] = row.count;
 
   const choiceRows = await sql`
-    SELECT choice, COUNT(*)::int AS count
+    SELECT choice, status, COUNT(*)::int AS count
     FROM ballots
-    WHERE status = 'verified'
-    GROUP BY choice
+    WHERE status IN ('verified', 'submitted')
+    GROUP BY choice, status
   `;
   const choiceMap: Record<string, number> = {};
-  for (const row of choiceRows) choiceMap[row.choice] = row.count;
+  const pendingMap: Record<string, number> = {};
+  for (const row of choiceRows) {
+    if (row.status === 'verified') choiceMap[row.choice] = row.count;
+    else if (row.status === 'submitted') pendingMap[row.choice] = row.count;
+  }
 
   const submitted = statusMap['submitted'] ?? 0;
   const verified = statusMap['verified'] ?? 0;
@@ -41,5 +45,9 @@ export async function GET() {
     municipality: choiceMap['municipality'] ?? 0,
     abstain: choiceMap['abstain'] ?? 0,
     follow_majority: choiceMap['follow_majority'] ?? 0,
+    juristic_pending: pendingMap['juristic'] ?? 0,
+    municipality_pending: pendingMap['municipality'] ?? 0,
+    abstain_pending: pendingMap['abstain'] ?? 0,
+    follow_majority_pending: pendingMap['follow_majority'] ?? 0,
   });
 }

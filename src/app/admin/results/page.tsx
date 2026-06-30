@@ -126,6 +126,47 @@ export default function ResultsPage() {
               )}
             </div>
 
+            {/* Vote Breakdown - Pending */}
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h3 className="font-semibold text-gray-800 mb-2 text-lg">ผลคะแนน (ยังไม่ได้ตรวจเอกสาร)</h3>
+              <p className="text-sm text-gray-500 mb-6">มติที่รอตรวจสอบเอกสาร ยังไม่นับรวมผลทางการ ({results.submitted} คะแนน)</p>
+
+              {results.submitted === 0 ? (
+                <p className="text-gray-400 text-center py-6">ไม่มีมติที่รอตรวจสอบ</p>
+              ) : (
+                <div className="space-y-5">
+                  {[
+                    { label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic_pending, color: 'bg-indigo-300', icon: '🏢' },
+                    { label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality_pending, color: 'bg-teal-300', icon: '🏛️' },
+                    { label: 'ออกเสียงตามข้างมาก', count: results.follow_majority_pending, color: 'bg-amber-300', icon: '🤝' },
+                    { label: 'งดออกเสียง', count: results.abstain_pending, color: 'bg-gray-300', icon: '⚪' },
+                  ].map((opt) => {
+                    const p = parseFloat(pct(opt.count, results.submitted));
+                    return (
+                      <div key={opt.label}>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <span>{opt.icon}</span>
+                            <span className="font-medium text-gray-800">{opt.label}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xl font-bold text-gray-800">{opt.count}</span>
+                            <span className="text-sm text-gray-500 ml-1">คะแนน ({pct(opt.count, results.submitted)}%)</span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-4">
+                          <div
+                            className={`${opt.color} h-4 rounded-full transition-all`}
+                            style={{ width: `${p}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Participation */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h3 className="font-semibold text-gray-800 mb-4">อัตราการมีส่วนร่วม</h3>
