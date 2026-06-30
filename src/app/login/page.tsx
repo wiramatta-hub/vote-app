@@ -4,7 +4,21 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const COUNTDOWN_END = new Date('2026-06-28T23:59:00+07:00').getTime();
+const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function formatThaiDateTime(iso: string) {
+  const d = new Date(iso);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  const day = get('day');
+  const month = THAI_MONTHS[Number(get('month')) - 1];
+  const year = Number(get('year')) + 543;
+  const hour = get('hour') === '24' ? '00' : get('hour');
+  return `${day} ${month} ${year} เวลา ${hour}:${get('minute')} น.`;
+}
 
 function formatRemaining(ms: number) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -26,13 +40,26 @@ export default function LoginPage() {
   const [form, setForm] = useState({ house_no: '', owner_name: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [remainingMs, setRemainingMs] = useState(() => Math.max(0, COUNTDOWN_END - Date.now()));
+  const [startsAt, setStartsAt] = useState<string | null>(null);
+  const [endsAt, setEndsAt] = useState<string | null>(null);
+  const [configActive, setConfigActive] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setRemainingMs(Math.max(0, COUNTDOWN_END - Date.now()));
-    }, 1000);
+    fetch('/api/config')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setStartsAt(d.starts_at ?? null);
+          setEndsAt(d.ends_at ?? null);
+          setConfigActive(Boolean(d.is_active));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -72,7 +99,11 @@ export default function LoginPage() {
     }
   };
 
-  const isClosed = remainingMs <= 0;
+  const startMs = startsAt ? new Date(startsAt).getTime() : null;
+  const endMs = endsAt ? new Date(endsAt).getTime() : null;
+  const notStarted = startMs !== null && now < startMs;
+  const remainingMs = endMs !== null ? Math.max(0, endMs - now) : 0;
+  const isClosed = !configActive || (endMs !== null && now > endMs);
   const remaining = formatRemaining(remainingMs);
 
   return (
@@ -95,9 +126,17 @@ export default function LoginPage() {
             </p>
 
             <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
-              <p className="text-xs font-semibold text-indigo-700">เปิดลงมติวันที่ 28 มิถุนายน 2569 เวลา 08:00 - 23:59 น.</p>
+              {endsAt && (
+                <p className="text-xs font-semibold text-indigo-700">
+                  เปิดลงมติถึง {formatThaiDateTime(endsAt)}
+                </p>
+              )}
               {isClosed ? (
                 <p className="mt-1 text-sm font-bold text-red-600">หมดเวลาลงมติแล้ว</p>
+              ) : notStarted ? (
+                <p className="mt-1 text-sm font-bold text-indigo-900">
+                  เปิดลงมติ {startsAt ? formatThaiDateTime(startsAt) : ''}
+                </p>
               ) : (
                 <p className="mt-1 text-sm font-bold text-indigo-900">
                   เวลาคงเหลือ {remaining.days} วัน {remaining.hours}:{remaining.minutes}:{remaining.seconds}
