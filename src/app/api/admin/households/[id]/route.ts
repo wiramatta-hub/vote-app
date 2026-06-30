@@ -59,6 +59,36 @@ export async function PATCH(
 
   // Optional: admin manually sets the vote status for this household
   if (body.voteStatus) {
+    // Manual voting is only allowed after the online voting window has closed
+    const [config] = await sql`
+      SELECT starts_at, ends_at, is_active FROM vote_config ORDER BY created_at ASC LIMIT 1
+    `;
+    const now = Date.now();
+    const endsAt = config?.ends_at ? new Date(config.ends_at).getTime() : null;
+    const startsAt = config?.starts_at ? new Date(config.starts_at).getTime() : null;
+    const votingOpen = Boolean(
+      config?.is_active &&
+      (startsAt === null || now >= startsAt) &&
+      (endsAt === null || now <= endsAt)
+    );
+    if (votingOpen) {
+      return NextResponse.json(
+        { error: 'ยังไม่สามารถลงมติด้วยมือได้ จนกว่าจะปิดการลงมติออนไลน์' },
+        { status: 403 }
+      );
+    }
+
+    // Households that already voted online cannot be edited manually
+    const onlineBallot = await sql`
+      SELECT id FROM ballots WHERE household_id = ${id} AND is_offline = false LIMIT 1
+    `;
+    if (onlineBallot[0]) {
+      return NextResponse.json(
+        { error: 'บ้านนี้ลงมติออนไลน์แล้ว ไม่สามารถลงมติด้วยมือได้' },
+        { status: 409 }
+      );
+    }
+
     const validChoices = ['juristic', 'municipality', 'abstain', 'follow_majority'];
     if (body.voteStatus !== 'none' && !validChoices.includes(body.voteChoice ?? '')) {
       return NextResponse.json(
@@ -67,7 +97,7 @@ export async function PATCH(
       );
     }
 
-    // Replace any existing ballots for this household with the new manual state
+    // Replace any existing (offline) ballots for this household with the new manual state
     await sql`
       DELETE FROM documents
       WHERE ballot_id IN (SELECT id FROM ballots WHERE household_id = ${id})

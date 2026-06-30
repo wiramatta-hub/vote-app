@@ -54,6 +54,7 @@ export default function HouseholdsPage() {
   const router = useRouter();
   const [households, setHouseholds] = useState<Household[]>([]);
   const [loading, setLoading] = useState(true);
+  const [votingOpen, setVotingOpen] = useState<boolean>(false);
   const [showImport, setShowImport] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [importError, setImportError] = useState('');
@@ -82,6 +83,13 @@ export default function HouseholdsPage() {
   }, [router]);
 
   useEffect(() => { fetchHouseholds(); }, [fetchHouseholds]);
+
+  useEffect(() => {
+    fetch('/api/admin/results')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setVotingOpen(Boolean(d.votingOpen)); })
+      .catch(() => {});
+  }, []);
 
   const handleImport = async () => {
     setImportError('');
@@ -421,6 +429,22 @@ export default function HouseholdsPage() {
 
               <div className="border-t border-gray-100 pt-3">
                 <label className="block text-sm font-medium text-gray-700 mb-2">สถานะการโหวต</label>
+                {(() => {
+                  const hasOnlineBallot = editing?.ballots?.some((b) => !b.is_offline) ?? false;
+                  const manualLocked = votingOpen || hasOnlineBallot;
+                  if (manualLocked) {
+                    return (
+                      <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-3 text-sm">
+                        {votingOpen ? (
+                          <p className="text-gray-600">⏳ ลงมติด้วยมือได้หลังปิดการลงมติออนไลน์เท่านั้น</p>
+                        ) : (
+                          <p className="text-gray-600">🔒 บ้านนี้ลงมติออนไลน์แล้ว ไม่สามารถแก้ไขด้วยมือ</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { value: 'none', label: 'ยังไม่โหวต' },
@@ -472,6 +496,9 @@ export default function HouseholdsPage() {
                 <p className="text-xs text-amber-600 mt-2">
                   ⚠️ การเปลี่ยนสถานะจะแทนที่มติเดิมของบ้านนี้ทั้งหมด
                 </p>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             {editError && <p className="text-red-600 text-sm mt-3">{editError}</p>}
