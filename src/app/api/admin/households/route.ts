@@ -10,12 +10,14 @@ export async function GET() {
   const households = await sql`SELECT * FROM households ORDER BY house_no`;
   const householdIds = households.map((h) => h.id);
   const ballots = householdIds.length
-    ? await sql`SELECT id, status, household_id FROM ballots WHERE household_id = ANY(${householdIds})`
+    ? await sql`SELECT id, status, household_id, is_offline, choice FROM ballots WHERE household_id = ANY(${householdIds})`
     : [];
 
   const result = households.map((h) => ({
     ...h,
-    ballots: ballots.filter((b) => b.household_id === h.id).map((b) => ({ id: b.id, status: b.status })),
+    ballots: ballots
+      .filter((b) => b.household_id === h.id)
+      .map((b) => ({ id: b.id, status: b.status, is_offline: b.is_offline, choice: b.choice })),
   }));
 
   return NextResponse.json(result);

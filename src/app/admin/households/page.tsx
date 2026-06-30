@@ -7,13 +7,22 @@ import type { Household } from '@/lib/types';
 
 const STATUS_MAP: Record<string, { label: string; class: string }> = {
   verified: { label: 'โหวตแล้ว ✓', class: 'bg-green-100 text-green-800' },
-  submitted: { label: 'รอตรวจ', class: 'bg-yellow-100 text-yellow-800' },
+  offline: { label: 'โหวตแล้ว (ออฟไลน์)', class: 'bg-blue-100 text-blue-800' },
+  submitted: { label: 'รอตรวจเอกสาร', class: 'bg-yellow-100 text-yellow-800' },
   rejected: { label: 'ไม่ผ่าน', class: 'bg-red-100 text-red-800' },
   none: { label: 'ยังไม่โหวต', class: 'bg-gray-100 text-gray-600' },
 };
 
+const CHOICE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'juristic', label: 'จัดตั้งนิติบุคคลหมู่บ้าน' },
+  { value: 'municipality', label: 'ให้เทศบาลรับภารกิจดูแล' },
+  { value: 'follow_majority', label: 'ออกเสียงตามข้างมาก' },
+  { value: 'abstain', label: 'งดออกเสียง' },
+];
+
 function getVoteStatus(h: Household): string {
   if (!h.ballots || h.ballots.length === 0) return 'none';
+  if (h.ballots.some((b) => b.is_offline)) return 'offline';
   if (h.ballots.some((b) => b.status === 'verified')) return 'verified';
   if (h.ballots.some((b) => b.status === 'submitted')) return 'submitted';
   if (h.ballots.some((b) => b.status === 'rejected')) return 'rejected';
@@ -49,9 +58,13 @@ export default function HouseholdsPage() {
   const [importJson, setImportJson] = useState('');
   const [importError, setImportError] = useState('');
   const [importLoading, setImportLoading] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ house_no: '', owner_name: '' });
+  const [createError, setCreateError] = useState('');
+  const [createLoading, setCreateLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Household | null>(null);
-  const [editForm, setEditForm] = useState({ house_no: '', owner_name: '', is_active: true });
+  const [editForm, setEditForm] = useState({ house_no: '', owner_name: '', is_active: true, voteStatus: 'none', voteChoice: '' });
   const [editError, setEditError] = useState('');
   const [editLoading, setEditLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -110,11 +123,44 @@ export default function HouseholdsPage() {
     setEditError('');
     setConfirmDelete(false);
     setEditing(h);
+    const derived = getVoteStatus(h);
+    const status = derived === 'verified' ? 'voted' : derived === 'submitted' ? 'pending' : derived === 'offline' ? 'offline' : 'none';
+    const existingChoice = h.ballots?.find((b) => b.choice)?.choice ?? '';
     setEditForm({
       house_no: h.house_no,
       owner_name: h.owner_name,
       is_active: h.is_active,
+      voteStatus: status,
+      voteChoice: existingChoice,
     });
+  };
+
+  const handleCreate = async () => {
+    setCreateError('');
+    if (!createForm.house_no.trim() || !createForm.owner_name.trim()) {
+      setCreateError('กรุณากรอกบ้านเลขที่และชื่อเจ้าบ้าน');
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      const res = await fetch('/api/admin/households', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ households: [{ house_no: createForm.house_no.trim(), owner_name: createForm.owner_name.trim() }] }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCreateError(data.error ?? 'เกิดข้อผิดพลาด');
+        return;
+      }
+      setShowCreate(false);
+      setCreateForm({ house_no: '', owner_name: '' });
+      fetchHouseholds();
+    } catch {
+      setCreateError('ไม่สามารถเชื่อมต่อได้');
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleEditSave = async () => {
@@ -124,12 +170,31 @@ export default function HouseholdsPage() {
       setEditError('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
+    if (editForm.voteStatus !== 'none' && !editForm.voteChoice) {
+      setEditError('กรุณาเลือกตัวเลือกการลงมติ');
+      return;
+    }
     setEditLoading(true);
     try {
+      const derived = getVoteStatus(editing);
+      const origStatus = derived === 'verified' ? 'voted' : derived === 'submitted' ? 'pending' : derived === 'offline' ? 'offline' : 'none';
+      const origChoice = editing.ballots?.find((b) => b.choice)?.choice ?? '';
+      const statusChanged = editForm.voteStatus !== origStatus || editForm.voteChoice !== origChoice;
+
+      const payload: Record<string, unknown> = {
+        house_no: editForm.house_no,
+        owner_name: editForm.owner_name,
+        is_active: editForm.is_active,
+      };
+      if (statusChanged) {
+        payload.voteStatus = editForm.voteStatus;
+        payload.voteChoice = editForm.voteChoice;
+      }
+
       const res = await fetch(`/api/admin/households/${editing.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -192,6 +257,7 @@ export default function HouseholdsPage() {
   const stats = {
     total: households.length,
     voted: households.filter((h) => getVoteStatus(h) === 'verified').length,
+    offline: households.filter((h) => getVoteStatus(h) === 'offline').length,
     pending: households.filter((h) => getVoteStatus(h) === 'submitted').length,
     notVoted: households.filter((h) => getVoteStatus(h) === 'none').length,
   };
@@ -223,6 +289,12 @@ export default function HouseholdsPage() {
               📥 Export CSV
             </button>
             <button
+              onClick={() => setShowCreate(true)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+            >
+              + สร้างบ้านใหม่
+            </button>
+            <button
               onClick={() => setShowImport(true)}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium"
             >
@@ -232,11 +304,12 @@ export default function HouseholdsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {[
             { label: 'ทั้งหมด', value: stats.total, color: 'text-gray-800' },
             { label: 'โหวตแล้ว', value: stats.voted, color: 'text-green-700' },
-            { label: 'รอตรวจ', value: stats.pending, color: 'text-yellow-700' },
+            { label: 'ออฟไลน์', value: stats.offline, color: 'text-blue-700' },
+            { label: 'รอตรวจเอกสาร', value: stats.pending, color: 'text-yellow-700' },
             { label: 'ยังไม่โหวต', value: stats.notVoted, color: 'text-gray-500' },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl shadow-sm p-4 text-center">
@@ -345,6 +418,61 @@ export default function HouseholdsPage() {
                 />
                 <span className="text-sm text-gray-700">เปิดใช้งาน (อนุญาตให้เข้าสู่ระบบและลงมติ)</span>
               </label>
+
+              <div className="border-t border-gray-100 pt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-2">สถานะการโหวต</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'none', label: 'ยังไม่โหวต' },
+                    { value: 'voted', label: 'โหวตแล้ว' },
+                    { value: 'offline', label: 'โหวตแล้ว (ออฟไลน์)' },
+                    { value: 'pending', label: 'รอตรวจเอกสาร' },
+                  ].map((opt) => (
+                    <label
+                      key={opt.value}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
+                        editForm.voteStatus === opt.value
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="voteStatus"
+                        checked={editForm.voteStatus === opt.value}
+                        onChange={() => setEditForm({ ...editForm, voteStatus: opt.value })}
+                        className="w-4 h-4 text-indigo-600"
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+                {editForm.voteStatus !== 'none' && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ตัวเลือกที่ลงมติ <span className="text-red-500">*</span></label>
+                    <select
+                      value={editForm.voteChoice}
+                      onChange={(e) => setEditForm({ ...editForm, voteChoice: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-800"
+                    >
+                      <option value="">— เลือกตัวเลือก —</option>
+                      {CHOICE_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {editForm.voteStatus === 'pending'
+                        ? 'บันทึกเป็นมติที่รอตรวจเอกสาร (ยังไม่นับ)'
+                        : editForm.voteStatus === 'offline'
+                        ? 'บันทึกเป็นมติออฟไลน์ (นับแยกหมวดออฟไลน์)'
+                        : 'บันทึกเป็นมติที่ผ่านการตรวจแล้ว (นับในผลทางการ)'}
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-amber-600 mt-2">
+                  ⚠️ การเปลี่ยนสถานะจะแทนที่มติเดิมของบ้านนี้ทั้งหมด
+                </p>
+              </div>
             </div>
             {editError && <p className="text-red-600 text-sm mt-3">{editError}</p>}
             <div className="flex gap-3 mt-5">
@@ -396,6 +524,54 @@ export default function HouseholdsPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+            <h3 className="font-bold text-gray-800 mb-1">สร้างบ้านเลขที่ใหม่</h3>
+            <p className="text-sm text-gray-500 mb-4">เพิ่มบ้านทีละหลัง ระบบจะสร้างรหัสเชิญให้อัตโนมัติ</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">บ้านเลขที่ <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={createForm.house_no}
+                  onChange={(e) => setCreateForm({ ...createForm, house_no: e.target.value })}
+                  placeholder="เช่น 99/123"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-800"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อเจ้าบ้าน <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={createForm.owner_name}
+                  onChange={(e) => setCreateForm({ ...createForm, owner_name: e.target.value })}
+                  placeholder="เช่น สมชาย ใจดี"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-800"
+                />
+              </div>
+            </div>
+            {createError && <p className="text-red-600 text-sm mt-3">{createError}</p>}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={handleCreate}
+                disabled={createLoading || !createForm.house_no.trim() || !createForm.owner_name.trim()}
+                className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-medium rounded-lg text-sm transition-colors"
+              >
+                {createLoading ? 'กำลังสร้าง...' : 'สร้างบ้าน'}
+              </button>
+              <button
+                onClick={() => { setShowCreate(false); setCreateError(''); setCreateForm({ house_no: '', owner_name: '' }); }}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors"
+              >
+                ยกเลิก
+              </button>
             </div>
           </div>
         </div>

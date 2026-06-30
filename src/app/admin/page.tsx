@@ -52,12 +52,27 @@ export default function AdminDashboard() {
         ) : results ? (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
               {[
                 { label: 'หลังคาเรือนทั้งหมด', value: results.totalHouseholds, color: 'bg-blue-500' },
                 { label: 'ส่งมติแล้ว', value: results.total, color: 'bg-yellow-500' },
                 { label: 'ผ่านการตรวจ', value: results.verified, color: 'bg-green-500' },
-                { label: 'รอตรวจสอบ', value: results.submitted, color: 'bg-orange-500' },
+              ].map((card) => (
+                <div key={card.label} className="bg-white rounded-xl shadow-sm p-5">
+                  <div className={`w-10 h-1.5 ${card.color} rounded-full mb-3`} />
+                  <p className="text-3xl font-bold text-gray-800">{card.value}</p>
+                  <p className="text-sm text-gray-500 mt-1">{card.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Status breakdown (4 statuses) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+              {[
+                { label: 'ยังไม่โหวต', value: results.statusCounts?.none ?? 0, color: 'bg-gray-400' },
+                { label: 'โหวตแล้ว', value: results.statusCounts?.voted ?? 0, color: 'bg-green-500' },
+                { label: 'โหวตแล้ว (ออฟไลน์)', value: results.statusCounts?.offline ?? 0, color: 'bg-blue-500' },
+                { label: 'รอตรวจเอกสาร', value: results.statusCounts?.pending ?? 0, color: 'bg-orange-500' },
               ].map((card) => (
                 <div key={card.label} className="bg-white rounded-xl shadow-sm p-5">
                   <div className={`w-10 h-1.5 ${card.color} rounded-full mb-3`} />

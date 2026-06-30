@@ -16,6 +16,8 @@ export async function PATCH(
     house_no?: string;
     owner_name?: string;
     is_active?: boolean;
+    voteStatus?: 'none' | 'pending' | 'voted' | 'offline';
+    voteChoice?: 'juristic' | 'municipality' | 'abstain' | 'follow_majority';
   };
 
   const houseNo = body.house_no?.trim();
@@ -54,6 +56,42 @@ export async function PATCH(
     WHERE id = ${id}
     RETURNING id, house_no, owner_name, invite_code, is_active
   `;
+
+  // Optional: admin manually sets the vote status for this household
+  if (body.voteStatus) {
+    const validChoices = ['juristic', 'municipality', 'abstain', 'follow_majority'];
+    if (body.voteStatus !== 'none' && !validChoices.includes(body.voteChoice ?? '')) {
+      return NextResponse.json(
+        { error: 'กรุณาเลือกตัวเลือกการลงมติ' },
+        { status: 400 }
+      );
+    }
+
+    // Replace any existing ballots for this household with the new manual state
+    await sql`
+      DELETE FROM documents
+      WHERE ballot_id IN (SELECT id FROM ballots WHERE household_id = ${id})
+    `;
+    await sql`DELETE FROM ballots WHERE household_id = ${id}`;
+
+    if (body.voteStatus !== 'none') {
+      const status = body.voteStatus === 'pending' ? 'submitted' : 'verified';
+      const isOffline = body.voteStatus === 'offline';
+      const reviewedBy = status === 'verified' ? session.username : null;
+      await sql`
+        INSERT INTO ballots (household_id, voter_name, is_proxy, choice, status, is_offline, reviewed_by, reviewed_at)
+        VALUES (
+          ${id}, ${ownerName}, false, ${body.voteChoice!}, ${status}, ${isOffline},
+          ${reviewedBy}, ${status === 'verified' ? new Date().toISOString() : null}
+        )
+      `;
+    }
+
+    await sql`
+      INSERT INTO audit_logs (actor, action, target_id, metadata)
+      VALUES (${session.username}, 'household_vote_status_set', ${id}, ${JSON.stringify({ house_no: houseNo, voteStatus: body.voteStatus, voteChoice: body.voteChoice ?? null })})
+    `;
+  }
 
   await sql`
     INSERT INTO audit_logs (actor, action, target_id, metadata)

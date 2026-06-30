@@ -1,4 +1,4 @@
-export type VoteChoice = 'juristic' | 'municipality';
+export type VoteChoice = 'juristic' | 'municipality' | 'abstain' | 'follow_majority';
 export type BallotStatus = 'submitted' | 'verified' | 'rejected';
 export type DocType = 'house_registration' | 'proxy_letter' | 'id_card_owner' | 'id_card_proxy';
 export type AdminRole = 'admin' | 'reviewer';
@@ -11,7 +11,7 @@ export interface Household {
   invite_expires_at: string | null;
   is_active: boolean;
   created_at: string;
-  ballots?: { id: string; status: BallotStatus }[];
+  ballots?: { id: string; status: BallotStatus; is_offline?: boolean; choice?: VoteChoice }[];
 }
 
 export interface Ballot {
@@ -22,6 +22,7 @@ export interface Ballot {
   proxy_name: string | null;
   choice: VoteChoice;
   status: BallotStatus;
+  is_offline: boolean;
   reject_reason: string | null;
   ip_address: string | null;
   submitted_at: string;
@@ -77,5 +78,16 @@ export interface VoteResults {
   municipality_pending: number;
   abstain_pending: number;
   follow_majority_pending: number;
+  offline: number;
+  juristic_offline: number;
+  municipality_offline: number;
+  abstain_offline: number;
+  follow_majority_offline: number;
+  statusCounts: {
+    none: number;
+    voted: number;
+    offline: number;
+    pending: number;
+  };
   votingOpen?: boolean;
 }
