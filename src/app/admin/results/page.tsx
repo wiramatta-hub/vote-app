@@ -102,7 +102,7 @@ export default function ResultsPage() {
                           <div className="flex items-center gap-2">
                             <span>{opt.icon}</span>
                             <span className="font-medium text-gray-800">{opt.label}</span>
-                            {isWinner && results.juristic !== results.municipality && (
+                            {isWinner && results.juristic !== results.municipality && results.votingOpen && (
                               <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
                                 นำอยู่
                               </span>

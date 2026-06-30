@@ -77,4 +77,5 @@ export interface VoteResults {
   municipality_pending: number;
   abstain_pending: number;
   follow_majority_pending: number;
+  votingOpen?: boolean;
 }

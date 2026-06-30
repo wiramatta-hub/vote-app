@@ -10,6 +10,18 @@ export async function GET() {
     SELECT COUNT(*)::int AS count FROM households WHERE is_active = true
   `;
 
+  const [config] = await sql`
+    SELECT starts_at, ends_at, is_active FROM vote_config ORDER BY created_at ASC LIMIT 1
+  `;
+  const now = Date.now();
+  const startsAt = config?.starts_at ? new Date(config.starts_at).getTime() : null;
+  const endsAt = config?.ends_at ? new Date(config.ends_at).getTime() : null;
+  const votingOpen = Boolean(
+    config?.is_active &&
+    (startsAt === null || now >= startsAt) &&
+    (endsAt === null || now <= endsAt)
+  );
+
   const statusRows = await sql`
     SELECT status, COUNT(*)::int AS count FROM ballots GROUP BY status
   `;
@@ -49,5 +61,6 @@ export async function GET() {
     municipality_pending: pendingMap['municipality'] ?? 0,
     abstain_pending: pendingMap['abstain'] ?? 0,
     follow_majority_pending: pendingMap['follow_majority'] ?? 0,
+    votingOpen,
   });
 }
