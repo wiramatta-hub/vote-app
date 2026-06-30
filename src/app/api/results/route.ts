@@ -7,7 +7,10 @@ export async function GET() {
   `;
 
   const statusRows = await sql`
-    SELECT status, COUNT(*)::int AS count FROM ballots GROUP BY status
+    SELECT status, COUNT(*)::int AS count
+    FROM ballots
+    WHERE is_offline = false
+    GROUP BY status
   `;
   const statusMap: Record<string, number> = {};
   for (const row of statusRows) statusMap[row.status] = row.count;
@@ -15,19 +18,33 @@ export async function GET() {
   const choiceRows = await sql`
     SELECT choice, COUNT(*)::int AS count
     FROM ballots
-    WHERE status = 'verified'
+    WHERE status = 'verified' AND is_offline = false
     GROUP BY choice
   `;
   const choiceMap: Record<string, number> = {};
   for (const row of choiceRows) choiceMap[row.choice] = row.count;
 
+  const offlineRows = await sql`
+    SELECT choice, COUNT(*)::int AS count
+    FROM ballots
+    WHERE is_offline = true
+    GROUP BY choice
+  `;
+  const offlineMap: Record<string, number> = {};
+  for (const row of offlineRows) offlineMap[row.choice] = row.count;
+
   const submitted = statusMap['submitted'] ?? 0;
   const verified = statusMap['verified'] ?? 0;
   const rejected = statusMap['rejected'] ?? 0;
+  const offline =
+    (offlineMap['juristic'] ?? 0) +
+    (offlineMap['municipality'] ?? 0) +
+    (offlineMap['abstain'] ?? 0) +
+    (offlineMap['follow_majority'] ?? 0);
 
   return NextResponse.json({
     totalHouseholds: households.count,
-    total: submitted + verified + rejected,
+    total: submitted + verified + rejected + offline,
     submitted,
     verified,
     rejected,
@@ -35,5 +52,10 @@ export async function GET() {
     municipality: choiceMap['municipality'] ?? 0,
     abstain: choiceMap['abstain'] ?? 0,
     follow_majority: choiceMap['follow_majority'] ?? 0,
+    offline,
+    juristic_offline: offlineMap['juristic'] ?? 0,
+    municipality_offline: offlineMap['municipality'] ?? 0,
+    abstain_offline: offlineMap['abstain'] ?? 0,
+    follow_majority_offline: offlineMap['follow_majority'] ?? 0,
   });
 }
