@@ -18,6 +18,7 @@ export async function PATCH(
     is_active?: boolean;
     voteStatus?: 'none' | 'pending' | 'voted' | 'offline';
     voteChoice?: 'juristic' | 'municipality' | 'abstain' | 'follow_majority';
+    revokeVote?: boolean;
   };
 
   const houseNo = body.house_no?.trim();
@@ -56,6 +57,20 @@ export async function PATCH(
     WHERE id = ${id}
     RETURNING id, house_no, owner_name, invite_code, is_active
   `;
+
+  // Revoke/clear all ballots for this household (e.g. resident voted under the
+  // wrong house number). Allowed even while the online voting window is open.
+  if (body.revokeVote) {
+    await sql`
+      DELETE FROM documents
+      WHERE ballot_id IN (SELECT id FROM ballots WHERE household_id = ${id})
+    `;
+    await sql`DELETE FROM ballots WHERE household_id = ${id}`;
+    await sql`
+      INSERT INTO audit_logs (actor, action, target_id, metadata)
+      VALUES (${session.username}, 'household_vote_revoked', ${id}, ${JSON.stringify({ house_no: houseNo })})
+    `;
+  }
 
   // Optional: admin manually sets the vote status for this household
   if (body.voteStatus) {

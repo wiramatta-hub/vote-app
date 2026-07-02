@@ -70,6 +70,8 @@ export default function HouseholdsPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmRevoke, setConfirmRevoke] = useState(false);
+  const [revokeLoading, setRevokeLoading] = useState(false);
 
   const fetchHouseholds = useCallback(async () => {
     setLoading(true);
@@ -130,6 +132,7 @@ export default function HouseholdsPage() {
   const openEdit = (h: Household) => {
     setEditError('');
     setConfirmDelete(false);
+    setConfirmRevoke(false);
     setEditing(h);
     const derived = getVoteStatus(h);
     const status = derived === 'verified' ? 'voted' : derived === 'submitted' ? 'pending' : derived === 'offline' ? 'offline' : 'none';
@@ -215,6 +218,36 @@ export default function HouseholdsPage() {
       setEditError('ไม่สามารถเชื่อมต่อได้');
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!editing) return;
+    setEditError('');
+    setRevokeLoading(true);
+    try {
+      const res = await fetch(`/api/admin/households/${editing.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          house_no: editForm.house_no,
+          owner_name: editForm.owner_name,
+          is_active: editForm.is_active,
+          revokeVote: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error ?? 'เกิดข้อผิดพลาด');
+        return;
+      }
+      setEditing(null);
+      setConfirmRevoke(false);
+      fetchHouseholds();
+    } catch {
+      setEditError('ไม่สามารถเชื่อมต่อได้');
+    } finally {
+      setRevokeLoading(false);
     }
   };
 
@@ -433,12 +466,48 @@ export default function HouseholdsPage() {
                   const hasOnlineBallot = editing?.ballots?.some((b) => !b.is_offline) ?? false;
                   const manualLocked = votingOpen || hasOnlineBallot;
                   if (manualLocked) {
+                    const hasBallot = (editing?.ballots?.length ?? 0) > 0;
                     return (
-                      <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-3 text-sm">
-                        {votingOpen ? (
-                          <p className="text-gray-600">⏳ ลงมติด้วยมือได้หลังปิดการลงมติออนไลน์เท่านั้น</p>
-                        ) : (
-                          <p className="text-gray-600">🔒 บ้านนี้ลงมติออนไลน์แล้ว ไม่สามารถแก้ไขด้วยมือ</p>
+                      <div className="space-y-3">
+                        <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-3 text-sm">
+                          {votingOpen ? (
+                            <p className="text-gray-600">⏳ ลงมติด้วยมือได้หลังปิดการลงมติออนไลน์เท่านั้น</p>
+                          ) : (
+                            <p className="text-gray-600">🔒 บ้านนี้ลงมติออนไลน์แล้ว ไม่สามารถแก้ไขด้วยมือ</p>
+                          )}
+                        </div>
+                        {hasBallot && (
+                          !confirmRevoke ? (
+                            <button
+                              onClick={() => { setConfirmRevoke(true); setEditError(''); }}
+                              className="w-full py-2.5 bg-white border border-amber-300 text-amber-700 font-medium rounded-lg text-sm hover:bg-amber-50 transition-colors"
+                            >
+                              ↩️ ยกการลงมติของบ้านนี้
+                            </button>
+                          ) : (
+                            <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                              <p className="text-sm text-amber-800">
+                                ยืนยันการยกเลิกมติของบ้านเลขที่ <span className="font-mono font-semibold">{editing?.house_no}</span>?
+                                ใช้กรณีลูกบ้านลงมติผิดบ้านเลขที่ ระบบจะล้างมติทั้งหมดของบ้านนี้ และบ้านนี้จะกลับมาลงมติได้ใหม่
+                              </p>
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={handleRevoke}
+                                  disabled={revokeLoading}
+                                  className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-medium rounded-lg text-sm transition-colors"
+                                >
+                                  {revokeLoading ? 'กำลังยกเลิก...' : 'ยืนยันยกการลงมติ'}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmRevoke(false)}
+                                  disabled={revokeLoading}
+                                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors"
+                                >
+                                  ยกเลิก
+                                </button>
+                              </div>
+                            </div>
+                          )
                         )}
                       </div>
                     );
@@ -511,7 +580,7 @@ export default function HouseholdsPage() {
                 {editLoading ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
               <button
-                onClick={() => { setEditing(null); setEditError(''); setConfirmDelete(false); }}
+                onClick={() => { setEditing(null); setEditError(''); setConfirmDelete(false); setConfirmRevoke(false); }}
                 className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors"
               >
                 ยกเลิก
