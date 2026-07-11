@@ -7,6 +7,7 @@ import type { VoteResults } from '@/lib/types';
 export default function PublicResultsPage() {
   const [results, setResults] = useState<VoteResults | null>(null);
   const [loading, setLoading] = useState(true);
+  const [projectorMode, setProjectorMode] = useState(false);
 
   useEffect(() => {
     fetch('/api/results')
@@ -43,6 +44,10 @@ export default function PublicResultsPage() {
     (best, item) => (item.count > best.count ? { label: item.label, count: item.count } : best),
     { label: 'ยังไม่มีคะแนน', count: 0 }
   );
+  const projectorOnline = onlineItems.map((item) => ({
+    ...item,
+    percent: results ? fmtPct(item.count, Math.max(results.verified, 1)) : '0.0',
+  }));
 
   const donutStyle = results
     ? {
@@ -69,9 +74,17 @@ export default function PublicResultsPage() {
             <p className="text-xs font-semibold tracking-[0.18em] text-slate-500">LIVE DASHBOARD</p>
             <h1 className="text-lg font-extrabold sm:text-2xl">ผลโหวตปัจจุบัน</h1>
           </div>
-          <Link href="/login" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50">
-            กลับหน้าเข้าสู่ระบบ
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setProjectorMode((v) => !v)}
+              className="rounded-full border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:-translate-y-0.5 hover:bg-indigo-100"
+            >
+              {projectorMode ? 'ปิดโหมดโปรเจคเตอร์' : 'โหมดโปรเจคเตอร์'}
+            </button>
+            <Link href="/login" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50">
+              กลับหน้าเข้าสู่ระบบ
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -83,6 +96,73 @@ export default function PublicResultsPage() {
         ) : !results ? (
           <div className="rounded-3xl border border-red-100 bg-red-50 p-10 text-center text-red-700">
             ไม่สามารถโหลดข้อมูลได้
+          </div>
+        ) : projectorMode ? (
+          <div className="space-y-6">
+            <section className="rounded-3xl bg-gradient-to-r from-slate-950 via-indigo-950 to-cyan-950 p-6 text-white shadow-2xl sm:p-10">
+              <p className="text-sm font-semibold tracking-[0.2em] text-cyan-200">PROJECTOR MODE</p>
+              <h2 className="mt-2 text-3xl font-black sm:text-5xl">ผลโหวตงานประชุม</h2>
+              <p className="mt-3 text-sm text-slate-200 sm:text-lg">สรุปคะแนนแบบตัวเลขขนาดใหญ่สำหรับการฉายจอ</p>
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur sm:p-5">
+                  <p className="text-xs text-slate-200 sm:text-sm">ผู้มีสิทธิ์</p>
+                  <p className="mt-1 text-4xl font-black sm:text-6xl">{results.totalHouseholds}</p>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur sm:p-5">
+                  <p className="text-xs text-slate-200 sm:text-sm">ส่งมติแล้ว</p>
+                  <p className="mt-1 text-4xl font-black sm:text-6xl">{results.total}</p>
+                  <p className="text-xs text-cyan-200 sm:text-sm">{turnout}% turnout</p>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur sm:p-5">
+                  <p className="text-xs text-slate-200 sm:text-sm">ผ่านการตรวจ</p>
+                  <p className="mt-1 text-4xl font-black sm:text-6xl">{results.verified}</p>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-4 backdrop-blur sm:p-5">
+                  <p className="text-xs text-slate-200 sm:text-sm">ออฟไลน์</p>
+                  <p className="mt-1 text-4xl font-black sm:text-6xl">{results.offline}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-xl shadow-slate-300/40 sm:p-8">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <h3 className="text-2xl font-black text-slate-900 sm:text-4xl">คะแนนออนไลน์ (นับแล้ว)</h3>
+                <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600 sm:text-base">รวม {results.verified} คะแนน</p>
+              </div>
+              {results.verified === 0 ? (
+                <p className="rounded-2xl bg-slate-50 p-8 text-center text-xl text-slate-500">ยังไม่มีคะแนนออนไลน์ที่นับแล้ว</p>
+              ) : (
+                <div className="space-y-4">
+                  {projectorOnline.map((item) => (
+                    <div key={`projector-${item.key}`} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <p className="text-lg font-bold text-slate-800 sm:text-2xl">{item.icon} {item.label}</p>
+                        <p className="text-xl font-black text-slate-900 sm:text-3xl">{item.count} <span className="text-sm font-bold text-slate-500 sm:text-lg">({item.percent}%)</span></p>
+                      </div>
+                      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200 sm:h-5">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${item.color} transition-all duration-700 ease-out`}
+                          style={{ width: `${item.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="grid gap-4 sm:grid-cols-3">
+              {[
+                { label: 'รอรับเอกสาร', value: results.submitted, cls: 'bg-amber-50 border-amber-200 text-amber-800' },
+                { label: 'ไม่ผ่านการตรวจ', value: results.rejected, cls: 'bg-rose-50 border-rose-200 text-rose-800' },
+                { label: 'เสียงนำ', value: `${leader.label} (${leader.count})`, cls: 'bg-indigo-50 border-indigo-200 text-indigo-800' },
+              ].map((item) => (
+                <article key={item.label} className={`rounded-2xl border p-4 sm:p-5 ${item.cls}`}>
+                  <p className="text-sm font-semibold">{item.label}</p>
+                  <p className="mt-1 text-2xl font-black sm:text-4xl">{item.value}</p>
+                </article>
+              ))}
+            </section>
           </div>
         ) : (
           <div className="space-y-6 sm:space-y-8">
