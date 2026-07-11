@@ -110,7 +110,9 @@ export default function ReviewPage() {
   const missingDocs = (ballot: Ballot) => {
     const m: string[] = [];
     if (ballot.is_proxy && !docChecks[`${ballot.id}-proxy`]) m.push('หนังสือมอบฉันทะ');
-    if (!docChecks[`${ballot.id}-idcard`]) m.push('สำเนาบัตรประชาชน');
+    const hasIdCard = !!docChecks[`${ballot.id}-idcard`];
+    const hasChatProof = !!docChecks[`${ballot.id}-chat`];
+    if (!hasIdCard && !hasChatProof) m.push('สำเนาบัตรประชาชนหรือหลักฐานทางแชท');
     return m;
   };
 
@@ -345,6 +347,16 @@ export default function ReviewPage() {
                             className="w-4 h-4 text-indigo-600 rounded"
                           />
                           สำเนาบัตรประชาชน
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={ballot.status === 'verified' || !!docChecks[`${ballot.id}-chat`]}
+                            disabled={ballot.status === 'verified'}
+                            onChange={() => toggleDocCheck(`${ballot.id}-chat`)}
+                            className="w-4 h-4 text-indigo-600 rounded"
+                          />
+                          หลักฐานทางแชท
                         </label>
                       </div>
                     </div>
