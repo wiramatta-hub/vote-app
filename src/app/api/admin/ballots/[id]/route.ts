@@ -15,17 +15,22 @@ export async function PATCH(
   const body = await req.json();
   const voterName = String(body.voter_name ?? '').trim();
   const proxyName = String(body.proxy_name ?? '').trim();
+  const isProxy = body.is_proxy === true || body.is_proxy === 'true';
 
   if (!voterName) {
     return NextResponse.json({ error: 'กรุณากรอกชื่อผู้ลงมติ' }, { status: 400 });
+  }
+  if (isProxy && !proxyName) {
+    return NextResponse.json({ error: 'กรุณากรอกชื่อผู้รับมอบฉันทะ' }, { status: 400 });
   }
 
   const [updated] = await sql`
     UPDATE ballots
     SET voter_name = ${voterName},
-        proxy_name = CASE WHEN is_proxy THEN ${proxyName || null} ELSE proxy_name END
+        is_proxy = ${isProxy},
+        proxy_name = ${isProxy ? proxyName : null}
     WHERE id = ${id}
-    RETURNING id, voter_name, proxy_name
+    RETURNING id, voter_name, is_proxy, proxy_name
   `;
 
   if (!updated) return NextResponse.json({ error: 'ไม่พบรายการ' }, { status: 404 });

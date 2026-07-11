@@ -41,6 +41,7 @@ export default function ReviewPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editVoter, setEditVoter] = useState('');
   const [editProxy, setEditProxy] = useState('');
+  const [editIsProxy, setEditIsProxy] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const q = search.trim().toLowerCase();
@@ -56,29 +57,31 @@ export default function ReviewPage() {
     setEditingId(ballot.id);
     setEditVoter(ballot.voter_name);
     setEditProxy(ballot.proxy_name ?? '');
+    setEditIsProxy(ballot.is_proxy);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditVoter('');
     setEditProxy('');
+    setEditIsProxy(false);
   };
 
   const saveEdit = async (ballot: Ballot) => {
     if (!editVoter.trim()) { alert('กรุณากรอกชื่อผู้ลงมติ'); return; }
-    if (ballot.is_proxy && !editProxy.trim()) { alert('กรุณากรอกชื่อผู้รับมอบฉันทะ'); return; }
+    if (editIsProxy && !editProxy.trim()) { alert('กรุณากรอกชื่อผู้รับมอบฉันทะ'); return; }
     setSavingEdit(true);
     try {
       const res = await fetch(`/api/admin/ballots/${ballot.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voter_name: editVoter.trim(), proxy_name: editProxy.trim() }),
+        body: JSON.stringify({ voter_name: editVoter.trim(), is_proxy: editIsProxy, proxy_name: editProxy.trim() }),
       });
       const d = await res.json();
       if (!res.ok) { alert(d.error ?? 'เกิดข้อผิดพลาด'); return; }
       setBallots((prev) =>
         prev.map((x) =>
-          x.id === ballot.id ? { ...x, voter_name: d.voter_name, proxy_name: d.proxy_name } : x
+          x.id === ballot.id ? { ...x, voter_name: d.voter_name, is_proxy: d.is_proxy, proxy_name: d.proxy_name } : x
         )
       );
       cancelEdit();
@@ -270,7 +273,16 @@ export default function ReviewPage() {
                               className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-gray-800"
                             />
                           </div>
-                          {ballot.is_proxy && (
+                          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editIsProxy}
+                              onChange={(e) => setEditIsProxy(e.target.checked)}
+                              className="w-4 h-4 text-indigo-600 rounded"
+                            />
+                            ลงมติแทน (มอบฉันทะ)
+                          </label>
+                          {editIsProxy && (
                             <div>
                               <label className="block text-xs text-amber-600 mb-1">ชื่อผู้รับมอบฉันทะ</label>
                               <input
@@ -303,7 +315,7 @@ export default function ReviewPage() {
                           onClick={() => startEdit(ballot)}
                           className="text-indigo-500 hover:text-indigo-700 text-xs underline"
                         >
-                          ✏️ แก้ไขชื่อผู้ลงมติ
+                          ✏️ แก้ไขชื่อผู้ลงมติ / การมอบฉันทะ
                         </button>
                       )}
                     </div>
