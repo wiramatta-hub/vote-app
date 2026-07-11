@@ -15,122 +15,225 @@ export default function PublicResultsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const pct = (n: number, total: number) =>
-    total > 0 ? ((n / total) * 100).toFixed(1) : '0.0';
+  const pct = (n: number, total: number) => (total > 0 ? (n / total) * 100 : 0);
+  const fmtPct = (n: number, total: number) => pct(n, total).toFixed(1);
 
-  const turnout = results ? pct(results.total, results.totalHouseholds) : '0.0';
+  const turnout = results ? fmtPct(results.total, results.totalHouseholds) : '0.0';
+  const verifiedPct = results ? fmtPct(results.verified, results.total || 1) : '0.0';
+
+  const onlineItems = results
+    ? [
+        { key: 'juristic', label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic, color: 'from-fuchsia-500 to-rose-500', textColor: 'text-fuchsia-700', icon: '🏢' },
+        { key: 'municipality', label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality, color: 'from-blue-500 to-cyan-500', textColor: 'text-blue-700', icon: '🏛️' },
+        { key: 'follow_majority', label: 'ออกเสียงตามข้างมาก', count: results.follow_majority, color: 'from-amber-500 to-orange-500', textColor: 'text-amber-700', icon: '🤝' },
+        { key: 'abstain', label: 'งดออกเสียง', count: results.abstain, color: 'from-slate-500 to-zinc-500', textColor: 'text-slate-700', icon: '⚪' },
+      ]
+    : [];
+
+  const offlineItems = results
+    ? [
+        { key: 'juristic_offline', label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic_offline, color: 'from-indigo-500 to-violet-500', icon: '🏢' },
+        { key: 'municipality_offline', label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality_offline, color: 'from-teal-500 to-emerald-500', icon: '🏛️' },
+        { key: 'follow_majority_offline', label: 'ออกเสียงตามข้างมาก', count: results.follow_majority_offline, color: 'from-sky-500 to-cyan-500', icon: '🤝' },
+        { key: 'abstain_offline', label: 'งดออกเสียง', count: results.abstain_offline, color: 'from-gray-500 to-zinc-500', icon: '⚪' },
+      ]
+    : [];
+
+  const leader = onlineItems.reduce<{ label: string; count: number }>(
+    (best, item) => (item.count > best.count ? { label: item.label, count: item.count } : best),
+    { label: 'ยังไม่มีคะแนน', count: 0 }
+  );
+
+  const donutStyle = results
+    ? {
+        background: `conic-gradient(
+          #d946ef 0% ${pct(results.juristic, Math.max(results.verified, 1))}%,
+          #06b6d4 ${pct(results.juristic, Math.max(results.verified, 1))}% ${pct(results.juristic + results.municipality, Math.max(results.verified, 1))}%,
+          #f59e0b ${pct(results.juristic + results.municipality, Math.max(results.verified, 1))}% ${pct(results.juristic + results.municipality + results.follow_majority, Math.max(results.verified, 1))}%,
+          #71717a ${pct(results.juristic + results.municipality + results.follow_majority, Math.max(results.verified, 1))}% 100%
+        )`,
+      }
+    : undefined;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-gray-800 text-white px-6 py-4 flex items-center justify-between">
-        <Link href="/login" className="font-bold text-lg">📊 ผลโหวตปัจจุบัน</Link>
-        <Link href="/login" className="text-sm text-gray-300 hover:text-white">กลับหน้าเข้าสู่ระบบ</Link>
+    <div className="min-h-screen bg-[#f3f4f8] text-slate-900 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-fuchsia-300/40 blur-3xl" />
+        <div className="absolute top-24 right-0 h-80 w-80 rounded-full bg-cyan-300/40 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-amber-200/35 blur-3xl" />
+      </div>
+
+      <nav className="border-b border-white/70 bg-white/70 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.18em] text-slate-500">LIVE DASHBOARD</p>
+            <h1 className="text-lg font-extrabold sm:text-2xl">ผลโหวตปัจจุบัน</h1>
+          </div>
+          <Link href="/login" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50">
+            กลับหน้าเข้าสู่ระบบ
+          </Link>
+        </div>
       </nav>
 
-      <div className="p-6 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">ผลการลงมติ</h2>
-
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         {loading ? (
-          <p className="text-gray-500">กำลังโหลด...</p>
-        ) : results ? (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="font-semibold text-gray-800 mb-4 text-lg">สรุปภาพรวม</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {[
-                  { label: 'หลังคาเรือนทั้งหมด', value: results.totalHouseholds, sub: 'ผู้มีสิทธิ์' },
-                  { label: 'ส่งมติแล้ว', value: results.total, sub: `${turnout}% ของผู้มีสิทธิ์` },
-                  { label: 'ผ่านการตรวจสอบ', value: results.verified, sub: 'คะแนนที่นับได้' },
-                  { label: 'รอรับเอกสาร', value: results.submitted, sub: 'ยังไม่นับ' },
-                  { label: 'ไม่ผ่านการตรวจ', value: results.rejected, sub: 'ไม่นับ' },
-                ].map((item) => (
-                  <div key={item.label} className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-2xl font-bold text-gray-800">{item.value}</p>
-                    <p className="text-sm font-medium text-gray-700 mt-0.5">{item.label}</p>
-                    <p className="text-xs text-gray-400">{item.sub}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="font-semibold text-gray-800 mb-2 text-lg">ผลคะแนน (ออนไลน์)</h3>
-              <p className="text-sm text-gray-500 mb-6">นับเฉพาะมติที่ผ่านการตรวจสอบเอกสาร ({results.verified} คะแนน)</p>
-
-              {results.verified === 0 ? (
-                <p className="text-gray-400 text-center py-6">ยังไม่มีคะแนนที่ผ่านการตรวจสอบ</p>
-              ) : (
-                <div className="space-y-5">
-                  {[
-                    { label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic, color: 'bg-indigo-500', icon: '🏢' },
-                    { label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality, color: 'bg-teal-500', icon: '🏛️' },
-                    { label: 'ออกเสียงตามข้างมาก', count: results.follow_majority, color: 'bg-amber-500', icon: '🤝' },
-                    { label: 'งดออกเสียง', count: results.abstain, color: 'bg-gray-400', icon: '⚪' },
-                  ].map((opt) => {
-                    const p = parseFloat(pct(opt.count, results.verified));
-                    return (
-                      <div key={opt.label}>
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <span>{opt.icon}</span>
-                            <span className="font-medium text-gray-800">{opt.label}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xl font-bold text-gray-800">{opt.count}</span>
-                            <span className="text-sm text-gray-500 ml-1">คะแนน ({pct(opt.count, results.verified)}%)</span>
-                          </div>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-4">
-                          <div className={`${opt.color} h-4 rounded-full transition-all`} style={{ width: `${p}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="font-semibold text-gray-800 mb-2 text-lg">ผลคะแนน (ออฟไลน์)</h3>
-              <p className="text-sm text-gray-500 mb-6">มติที่บันทึกแบบออฟไลน์โดยเจ้าหน้าที่ ({results.offline} คะแนน)</p>
-
-              {results.offline === 0 ? (
-                <p className="text-gray-400 text-center py-6">ยังไม่มีมติแบบออฟไลน์</p>
-              ) : (
-                <div className="space-y-5">
-                  {[
-                    { label: 'จัดตั้งนิติบุคคลหมู่บ้าน', count: results.juristic_offline, color: 'bg-blue-500', icon: '🏢' },
-                    { label: 'ให้เทศบาลรับภารกิจดูแล', count: results.municipality_offline, color: 'bg-cyan-500', icon: '🏛️' },
-                    { label: 'ออกเสียงตามข้างมาก', count: results.follow_majority_offline, color: 'bg-sky-500', icon: '🤝' },
-                    { label: 'งดออกเสียง', count: results.abstain_offline, color: 'bg-gray-400', icon: '⚪' },
-                  ].map((opt) => {
-                    const p = parseFloat(pct(opt.count, results.offline));
-                    return (
-                      <div key={opt.label}>
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <span>{opt.icon}</span>
-                            <span className="font-medium text-gray-800">{opt.label}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xl font-bold text-gray-800">{opt.count}</span>
-                            <span className="text-sm text-gray-500 ml-1">คะแนน ({pct(opt.count, results.offline)}%)</span>
-                          </div>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-4">
-                          <div className={`${opt.color} h-4 rounded-full transition-all`} style={{ width: `${p}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+          <div className="rounded-3xl border border-white/70 bg-white/80 p-10 text-center shadow-lg shadow-slate-200/80">
+            <p className="text-slate-500">กำลังโหลดผลโหวต...</p>
+          </div>
+        ) : !results ? (
+          <div className="rounded-3xl border border-red-100 bg-red-50 p-10 text-center text-red-700">
+            ไม่สามารถโหลดข้อมูลได้
           </div>
         ) : (
-          <p className="text-gray-500">ไม่สามารถโหลดข้อมูลได้</p>
+          <div className="space-y-6 sm:space-y-8">
+            <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-900 to-cyan-900 p-5 text-white shadow-2xl shadow-cyan-900/20 sm:p-8">
+              <div className="absolute -right-12 -top-14 h-44 w-44 rounded-full bg-white/10" />
+              <div className="absolute -bottom-10 right-20 h-40 w-40 rounded-full bg-cyan-300/15" />
+              <div className="relative grid gap-4 sm:grid-cols-2 sm:gap-6">
+                <div>
+                  <p className="text-sm font-semibold text-cyan-200">ภาพรวม ณ ตอนนี้</p>
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-4xl">บอร์ดสรุปผลการลงมติ</h2>
+                  <p className="mt-3 max-w-xl text-sm text-slate-200 sm:text-base">
+                    แสดงผลแบบเรียลไทม์จากคะแนนออนไลน์ที่ผ่านการตรวจสอบและคะแนนออฟไลน์จากเจ้าหน้าที่
+                  </p>
+                  <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm backdrop-blur">
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300" />
+                    ข้อมูลอัปเดตอัตโนมัติ
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 self-end sm:gap-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p className="text-xs text-slate-200">ผู้มีสิทธิ์ทั้งหมด</p>
+                    <p className="mt-1 text-3xl font-extrabold">{results.totalHouseholds}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p className="text-xs text-slate-200">ส่งมติแล้ว</p>
+                    <p className="mt-1 text-3xl font-extrabold">{results.total}</p>
+                    <p className="text-xs text-cyan-200">{turnout}% turnout</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p className="text-xs text-slate-200">คะแนนที่นับได้</p>
+                    <p className="mt-1 text-3xl font-extrabold">{results.verified}</p>
+                    <p className="text-xs text-emerald-200">{verifiedPct}% ของทั้งหมด</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+                    <p className="text-xs text-slate-200">เสียงนำ</p>
+                    <p className="mt-1 text-sm font-bold leading-tight">{leader.label}</p>
+                    <p className="text-xs text-fuchsia-200">{leader.count} คะแนน</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { label: 'รอรับเอกสาร', value: results.submitted, chip: 'ยังไม่นับคะแนน', cls: 'from-amber-50 to-yellow-100 border-amber-200 text-amber-800' },
+                { label: 'ผ่านการตรวจสอบ', value: results.verified, chip: 'นับผลแล้ว', cls: 'from-emerald-50 to-green-100 border-emerald-200 text-emerald-800' },
+                { label: 'ไม่ผ่านการตรวจ', value: results.rejected, chip: 'ตัดออกจากการนับ', cls: 'from-rose-50 to-red-100 border-rose-200 text-rose-800' },
+                { label: 'บันทึกออฟไลน์', value: results.offline, chip: 'โดยเจ้าหน้าที่', cls: 'from-sky-50 to-cyan-100 border-sky-200 text-sky-800' },
+              ].map((card) => (
+                <article key={card.label} className={`rounded-2xl border bg-gradient-to-br p-4 shadow-sm ${card.cls}`}>
+                  <p className="text-xs font-semibold">{card.label}</p>
+                  <p className="mt-2 text-3xl font-black">{card.value}</p>
+                  <p className="mt-1 inline-flex rounded-full bg-white/60 px-2 py-1 text-[11px] font-semibold">{card.chip}</p>
+                </article>
+              ))}
+            </section>
+
+            <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <article className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
+                <div className="mb-4 flex items-end justify-between">
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-800">ผลคะแนนออนไลน์</h3>
+                    <p className="text-sm text-slate-500">นับเฉพาะมติที่ผ่านการตรวจสอบเอกสาร ({results.verified} คะแนน)</p>
+                  </div>
+                </div>
+
+                {results.verified === 0 ? (
+                  <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีคะแนนออนไลน์ที่ผ่านการตรวจสอบ</p>
+                ) : (
+                  <div className="space-y-4">
+                    {onlineItems.map((opt) => {
+                      const p = pct(opt.count, Math.max(results.verified, 1));
+                      return (
+                        <div key={opt.key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 sm:p-4">
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <span className="text-lg sm:text-xl">{opt.icon}</span>
+                              <p className="text-sm font-semibold text-slate-700 sm:text-base">{opt.label}</p>
+                            </div>
+                            <p className={`text-sm font-extrabold sm:text-base ${opt.textColor}`}>{opt.count} เสียง ({fmtPct(opt.count, results.verified)}%)</p>
+                          </div>
+                          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div className={`h-full rounded-full bg-gradient-to-r ${opt.color} transition-all duration-700 ease-out`} style={{ width: `${p}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </article>
+
+              <article className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
+                <h3 className="text-xl font-extrabold text-slate-800">สัดส่วนคะแนนออนไลน์</h3>
+                <p className="text-sm text-slate-500">จากคะแนนที่ผ่านการตรวจสอบ</p>
+
+                {results.verified === 0 ? (
+                  <p className="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีข้อมูลสำหรับกราฟ</p>
+                ) : (
+                  <>
+                    <div className="mx-auto mt-6 grid w-48 place-items-center">
+                      <div className="grid h-48 w-48 place-items-center rounded-full" style={donutStyle}>
+                        <div className="grid h-32 w-32 place-items-center rounded-full bg-white text-center shadow-inner">
+                          <p className="text-xs text-slate-500">คะแนนที่นับแล้ว</p>
+                          <p className="text-3xl font-black text-slate-800">{results.verified}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-6 space-y-2">
+                      {onlineItems.map((item) => (
+                        <div key={`${item.key}-legend`} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+                          <p className="text-sm font-medium text-slate-700">{item.icon} {item.label}</p>
+                          <p className="text-sm font-bold text-slate-800">{fmtPct(item.count, results.verified)}%</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </article>
+            </section>
+
+            <section className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
+              <div className="mb-4 flex items-end justify-between">
+                <div>
+                  <h3 className="text-xl font-extrabold text-slate-800">ผลคะแนนออฟไลน์</h3>
+                  <p className="text-sm text-slate-500">มติที่บันทึกแบบออฟไลน์โดยเจ้าหน้าที่ ({results.offline} คะแนน)</p>
+                </div>
+              </div>
+
+              {results.offline === 0 ? (
+                <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีมติแบบออฟไลน์</p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {offlineItems.map((opt) => (
+                    <div key={opt.key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                      <p className="text-sm font-semibold text-slate-700">{opt.icon} {opt.label}</p>
+                      <p className="mt-2 text-3xl font-black text-slate-800">{opt.count}</p>
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${opt.color} transition-all duration-700 ease-out`}
+                          style={{ width: `${pct(opt.count, Math.max(results.offline, 1))}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
