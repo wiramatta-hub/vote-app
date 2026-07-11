@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS ballots (
   status TEXT NOT NULL DEFAULT 'submitted'
     CHECK (status IN ('submitted', 'verified', 'rejected')),
   reject_reason TEXT,
+  verify_note TEXT,
   ip_address TEXT,
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   reviewed_by TEXT,

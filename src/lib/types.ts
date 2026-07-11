@@ -24,6 +24,7 @@ export interface Ballot {
   status: BallotStatus;
   is_offline: boolean;
   reject_reason: string | null;
+  verify_note: string | null;
   ip_address: string | null;
   submitted_at: string;
   reviewed_by: string | null;
