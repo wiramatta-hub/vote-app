@@ -107,9 +107,11 @@ export default function ReviewPage() {
     setDocChecks((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const isRealProxy = (ballot: Ballot) => ballot.is_proxy && !!ballot.proxy_name?.trim();
+
   const missingDocs = (ballot: Ballot) => {
     const m: string[] = [];
-    if (ballot.is_proxy && !docChecks[`${ballot.id}-proxy`]) m.push('หนังสือมอบฉันทะ');
+    if (isRealProxy(ballot) && !docChecks[`${ballot.id}-proxy`]) m.push('หนังสือมอบฉันทะ');
     const hasIdCard = !!docChecks[`${ballot.id}-idcard`];
     const hasChatProof = !!docChecks[`${ballot.id}-chat`];
     if (!hasIdCard && !hasChatProof) m.push('สำเนาบัตรประชาชนหรือหลักฐานทางแชท');
@@ -326,7 +328,7 @@ export default function ReviewPage() {
                     <div>
                       <p className="text-sm font-semibold text-gray-700 mb-2">เอกสารแนบ (เจ้าหน้าที่ตรวจรับ)</p>
                       <div className="flex flex-col gap-2">
-                        {ballot.is_proxy && (
+                        {isRealProxy(ballot) && (
                           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                             <input
                               type="checkbox"
