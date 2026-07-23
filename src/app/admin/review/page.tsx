@@ -240,7 +240,9 @@ export default function ReviewPage() {
                       <p className="text-sm text-gray-500">
                         {ballot.voter_name}
                         {ballot.is_proxy && (
-                          <span className="ml-2 text-amber-600">(แทน: {ballot.proxy_name?.trim() || 'เจ้าของบ้านเอง'})</span>
+                          <span className="ml-2 text-amber-600">
+                            ({ballot.proxy_name?.trim() ? `แทน: ${ballot.proxy_name.trim()}` : 'เจ้าของบ้านเอง'})
+                          </span>
                         )}
                       </p>
                     </div>
