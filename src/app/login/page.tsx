@@ -117,7 +117,7 @@ export default function LoginPage() {
             <h1 className="mt-2 text-xl font-extrabold leading-relaxed sm:text-2xl">ลงมติเห็นชอบแต่งตั้งตัวแทนเจรจากับทางที่ดิน</h1>
             <p className="mt-2 text-sm text-indigo-100">เพื่อดำเนินการจัดตั้งนิติบุคคลหมู่บ้าน ดีญ่า วาเลย์ หางดง</p>
             <p className="mt-3 text-xs leading-relaxed text-indigo-100/95 sm:text-sm">
-              ขอความอนุเคราะห์ร่วมลงชื่อรับรองตัวแทนหมู่บ้านเพื่อดำเนินการจัดตั้งนิติบุคคล
+              📣 ขอความอนุเคราะห์ ร่วมลงชื่อรับรอง“ตัวแทนหมู่บ้าน”เพื่อดำเนินการจัดตั้งนิติบุคคลฯ
             </p>
           </div>
         </section>
