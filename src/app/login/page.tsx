@@ -119,7 +119,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <p className="text-sm font-semibold text-indigo-700">ระบบลงมติออนไลน์</p>
-            <h1 className="text-2xl font-bold text-gray-800 mt-1">ลงมติเลือกรูปแบบการบริหารหมู่บ้าน</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mt-1">ลงมติเห็นชอบ แต่งตั้งบุคคลเป็นตัวแทนในการเจรจากับทางที่ดิน เพื่อดำเนินการจัดตั้งนิติบุคคลหมู่บ้าน ดีญ่า วาเลย์ หางดง</h1>
             <p className="text-gray-500 mt-1 text-sm">กรอกบ้านเลขที่หรือชื่อของท่านเพื่อเริ่มลงมติ</p>
             <p className="mt-3 inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-800 text-sm font-bold">
               กรอกอย่างใดอย่างหนึ่ง: บ้านเลขที่ หรือ ชื่อ-นามสกุล
