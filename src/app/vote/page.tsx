@@ -333,7 +333,20 @@ export default function VotePage() {
                 <p className="mt-1 text-sm text-slate-500">เลือกความเห็นครั้งเดียวเพื่อใช้กับรายชื่อทั้งหมด</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <p className="mb-3 text-xs font-semibold text-slate-500">รายชื่อทั้งหมด ({REPRESENTATIVES.length} ท่าน)</p>
+                  <div className="space-y-2">
+                    {REPRESENTATIVES.map((representative, index) => (
+                      <div key={representative} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-indigo-100 text-xs font-bold text-indigo-700">
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-800">{representative}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={() => setAllRepresentativeDecisions('approve')}
@@ -356,16 +369,6 @@ export default function VotePage() {
                   >
                     ✕ ไม่เห็นชอบ
                   </button>
-                </div>
-                <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-semibold text-slate-500 mb-2">รายชื่อทั้งหมด ({REPRESENTATIVES.length} ท่าน)</p>
-                  <div className="flex flex-wrap gap-2">
-                    {REPRESENTATIVES.map((representative) => (
-                      <span key={representative} className="rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
-                        {representative}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
