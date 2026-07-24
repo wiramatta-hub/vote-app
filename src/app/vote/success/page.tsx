@@ -32,32 +32,32 @@ function SuccessContent() {
           {isAlreadyVerified ? (
             <>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">ลงมติเรียบร้อยแล้ว</h2>
-              <p className="text-gray-500">บ้านเลขที่ของท่านได้รับการยืนยันมติแล้ว ขอบคุณที่ร่วมลงมติ</p>
+              <p className="text-gray-500">บ้านเลขที่ของท่านได้ลงมติเรียบร้อยแล้ว ขอบคุณที่ร่วมลงมติ</p>
             </>
           ) : isAlreadySubmitted ? (
             <>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">อยู่ระหว่างรอตรวจสอบ</h2>
-              <p className="text-gray-500">ท่านได้ส่งมติแล้ว กำลังรอเจ้าหน้าที่ตรวจสอบเอกสาร</p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">ลงมติเรียบร้อยแล้ว</h2>
+              <p className="text-gray-500">บ้านเลขที่ของท่านได้ส่งมติแล้ว ขอบคุณที่ร่วมลงมติ</p>
             </>
           ) : (
             <>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">ลงมติสำเร็จ!</h2>
-              <p className="text-gray-500">ระบบได้รับมติท่านแล้ว กำลังรอเอกสารของท่าน</p>
+              <p className="text-gray-500">ระบบบันทึกความเห็นของท่านเรียบร้อยแล้ว</p>
             </>
           )}
 
           <div className="mt-6 p-4 bg-gray-50 rounded-xl text-sm text-gray-600 text-left space-y-2">
             <div className="flex gap-2">
               <span>1.</span>
-              <span>เจ้าหน้าที่จะตรวจสอบเอกสารของท่าน</span>
+              <span>ระบบบันทึกผลการลงมติของท่านแล้ว</span>
             </div>
             <div className="flex gap-2">
               <span>2.</span>
-              <span>มติจะถูกนับเมื่อเอกสารผ่านการตรวจสอบ</span>
+              <span>บ้านเลขที่หนึ่งหลังส่งมติได้หนึ่งครั้ง</span>
             </div>
             <div className="flex gap-2">
               <span>3.</span>
-              <span>ผลการลงมติจะประกาศเมื่อปิดรับมติ</span>
+              <span>สามารถติดตามผลโหวตปัจจุบันได้จากปุ่มด้านล่าง</span>
             </div>
           </div>
 
@@ -65,7 +65,7 @@ function SuccessContent() {
             href="/results"
             className="mt-6 inline-block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors text-sm"
           >
-            ดูผลโหวตปัจจุบัน
+            ดูผลโหวต
           </Link>
 
           <Link
