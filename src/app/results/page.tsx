@@ -21,6 +21,10 @@ export default function PublicResultsPage() {
 
   const turnout = results ? fmtPct(results.total, results.totalHouseholds) : '0.0';
   const verifiedPct = results ? fmtPct(results.verified, results.total || 1) : '0.0';
+  const representativeRows = results?.representatives ?? [];
+  const hasRepresentativeVotes = representativeRows.some(
+    (row) => row.approved || row.rejected || row.pendingApproved || row.pendingRejected
+  );
 
   const onlineItems = results
     ? [
@@ -126,28 +130,60 @@ export default function PublicResultsPage() {
 
             <section className="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-xl shadow-slate-300/40 sm:p-8">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <h3 className="text-2xl font-black text-slate-900 sm:text-4xl">คะแนนออนไลน์ (นับแล้ว)</h3>
-                <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600 sm:text-base">รวม {results.verified} คะแนน</p>
+                <h3 className="text-2xl font-black text-slate-900 sm:text-4xl">
+                  {hasRepresentativeVotes ? 'ผลเห็นชอบรายชื่อตัวแทน' : 'คะแนนออนไลน์ (นับแล้ว)'}
+                </h3>
+                <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600 sm:text-base">รวม {results.verified} รายการ</p>
               </div>
               {results.verified === 0 ? (
                 <p className="rounded-2xl bg-slate-50 p-8 text-center text-xl text-slate-500">ยังไม่มีคะแนนออนไลน์ที่นับแล้ว</p>
               ) : (
-                <div className="space-y-4">
-                  {projectorOnline.map((item) => (
-                    <div key={`projector-${item.key}`} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-lg font-bold text-slate-800 sm:text-2xl">{item.icon} {item.label}</p>
-                        <p className="text-xl font-black text-slate-900 sm:text-3xl">{item.count} <span className="text-sm font-bold text-slate-500 sm:text-lg">({item.percent}%)</span></p>
+                hasRepresentativeVotes ? (
+                  <div className="space-y-4">
+                    {representativeRows.map((row) => {
+                      const totalDecision = row.approved + row.rejected;
+                      const approvalPct = totalDecision > 0 ? ((row.approved / totalDecision) * 100).toFixed(1) : '0.0';
+                      return (
+                        <div key={`projector-${row.name}`} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <p className="text-lg font-bold text-slate-800 sm:text-2xl">{row.name}</p>
+                            <p className="text-sm font-bold text-slate-600 sm:text-lg">เห็นชอบ {row.approved} | ไม่เห็นชอบ {row.rejected}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-center sm:gap-4">
+                            <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-700">
+                              <p className="text-sm font-semibold">เห็นชอบ</p>
+                              <p className="mt-1 text-3xl font-black sm:text-4xl">{row.approved}</p>
+                            </div>
+                            <div className="rounded-2xl bg-rose-50 p-4 text-rose-700">
+                              <p className="text-sm font-semibold">ไม่เห็นชอบ</p>
+                              <p className="mt-1 text-3xl font-black sm:text-4xl">{row.rejected}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 h-4 w-full overflow-hidden rounded-full bg-slate-200 sm:h-5">
+                            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-500 transition-all duration-700 ease-out" style={{ width: `${approvalPct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {projectorOnline.map((item) => (
+                      <div key={`projector-${item.key}`} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <p className="text-lg font-bold text-slate-800 sm:text-2xl">{item.icon} {item.label}</p>
+                          <p className="text-xl font-black text-slate-900 sm:text-3xl">{item.count} <span className="text-sm font-bold text-slate-500 sm:text-lg">({item.percent}%)</span></p>
+                        </div>
+                        <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200 sm:h-5">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${item.color} transition-all duration-700 ease-out`}
+                            style={{ width: `${item.percent}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="h-4 w-full overflow-hidden rounded-full bg-slate-200 sm:h-5">
-                        <div
-                          className={`h-full rounded-full bg-gradient-to-r ${item.color} transition-all duration-700 ease-out`}
-                          style={{ width: `${item.percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )
               )}
             </section>
 
@@ -199,8 +235,8 @@ export default function PublicResultsPage() {
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
                     <p className="text-xs text-slate-200">เสียงนำ</p>
-                    <p className="mt-1 text-sm font-bold leading-tight">{leader.label}</p>
-                    <p className="text-xs text-fuchsia-200">{leader.count} คะแนน</p>
+                    <p className="mt-1 text-sm font-bold leading-tight">{hasRepresentativeVotes ? 'ดูรายชื่อด้านล่าง' : leader.label}</p>
+                    <p className="text-xs text-fuchsia-200">{hasRepresentativeVotes ? 'สรุปรายบุคคล' : `${leader.count} คะแนน`}</p>
                   </div>
                 </div>
               </div>
@@ -221,68 +257,110 @@ export default function PublicResultsPage() {
               ))}
             </section>
 
-            <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <article className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
+            {hasRepresentativeVotes ? (
+              <section className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
                 <div className="mb-4 flex items-end justify-between">
                   <div>
-                    <h3 className="text-xl font-extrabold text-slate-800">ผลคะแนนออนไลน์</h3>
-                    <p className="text-sm text-slate-500">นับเฉพาะมติที่ผ่านการตรวจสอบเอกสาร ({results.verified} คะแนน)</p>
+                    <h3 className="text-xl font-extrabold text-slate-800">ผลเห็นชอบรายชื่อตัวแทน</h3>
+                    <p className="text-sm text-slate-500">นับเฉพาะรายการที่ผ่านการตรวจสอบเอกสาร ({results.verified} รายการ)</p>
                   </div>
                 </div>
 
                 {results.verified === 0 ? (
-                  <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีคะแนนออนไลน์ที่ผ่านการตรวจสอบ</p>
+                  <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีรายการที่ผ่านการตรวจสอบ</p>
                 ) : (
-                  <div className="space-y-4">
-                    {onlineItems.map((opt) => {
-                      const p = pct(opt.count, Math.max(results.verified, 1));
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {representativeRows.map((row) => {
+                      const totalDecision = row.approved + row.rejected;
                       return (
-                        <div key={opt.key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 sm:p-4">
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <span className="text-lg sm:text-xl">{opt.icon}</span>
-                              <p className="text-sm font-semibold text-slate-700 sm:text-base">{opt.label}</p>
+                        <article key={row.name} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-base font-bold text-slate-800">{row.name}</p>
+                            <p className="text-xs font-semibold text-slate-500">สัดส่วนเห็นชอบ {fmtPct(row.approved, Math.max(totalDecision, 1))}%</p>
+                          </div>
+                          <div className="mt-4 grid grid-cols-2 gap-3">
+                            <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-700">
+                              <p className="text-sm font-semibold">เห็นชอบ</p>
+                              <p className="mt-1 text-3xl font-black">{row.approved}</p>
                             </div>
-                            <p className={`text-sm font-extrabold sm:text-base ${opt.textColor}`}>{opt.count} เสียง ({fmtPct(opt.count, results.verified)}%)</p>
+                            <div className="rounded-2xl bg-rose-50 p-4 text-rose-700">
+                              <p className="text-sm font-semibold">ไม่เห็นชอบ</p>
+                              <p className="mt-1 text-3xl font-black">{row.rejected}</p>
+                            </div>
                           </div>
-                          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
-                            <div className={`h-full rounded-full bg-gradient-to-r ${opt.color} transition-all duration-700 ease-out`} style={{ width: `${p}%` }} />
+                          <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-500 transition-all duration-700 ease-out" style={{ width: `${fmtPct(row.approved, Math.max(totalDecision, 1))}%` }} />
                           </div>
-                        </div>
+                        </article>
                       );
                     })}
                   </div>
                 )}
-              </article>
+              </section>
+            ) : (
+              <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+                <article className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
+                  <div className="mb-4 flex items-end justify-between">
+                    <div>
+                      <h3 className="text-xl font-extrabold text-slate-800">ผลคะแนนออนไลน์</h3>
+                      <p className="text-sm text-slate-500">นับเฉพาะมติที่ผ่านการตรวจสอบเอกสาร ({results.verified} คะแนน)</p>
+                    </div>
+                  </div>
 
-              <article className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
-                <h3 className="text-xl font-extrabold text-slate-800">สัดส่วนคะแนนออนไลน์</h3>
-                <p className="text-sm text-slate-500">จากคะแนนที่ผ่านการตรวจสอบ</p>
+                  {results.verified === 0 ? (
+                    <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีคะแนนออนไลน์ที่ผ่านการตรวจสอบ</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {onlineItems.map((opt) => {
+                        const p = pct(opt.count, Math.max(results.verified, 1));
+                        return (
+                          <div key={opt.key} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 sm:p-4">
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 sm:gap-3">
+                                <span className="text-lg sm:text-xl">{opt.icon}</span>
+                                <p className="text-sm font-semibold text-slate-700 sm:text-base">{opt.label}</p>
+                              </div>
+                              <p className={`text-sm font-extrabold sm:text-base ${opt.textColor}`}>{opt.count} เสียง ({fmtPct(opt.count, results.verified)}%)</p>
+                            </div>
+                            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                              <div className={`h-full rounded-full bg-gradient-to-r ${opt.color} transition-all duration-700 ease-out`} style={{ width: `${p}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </article>
 
-                {results.verified === 0 ? (
-                  <p className="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีข้อมูลสำหรับกราฟ</p>
-                ) : (
-                  <>
-                    <div className="mx-auto mt-6 grid w-48 place-items-center">
-                      <div className="grid h-48 w-48 place-items-center rounded-full" style={donutStyle}>
-                        <div className="grid h-32 w-32 place-items-center rounded-full bg-white text-center shadow-inner">
-                          <p className="text-xs text-slate-500">คะแนนที่นับแล้ว</p>
-                          <p className="text-3xl font-black text-slate-800">{results.verified}</p>
+                <article className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
+                  <h3 className="text-xl font-extrabold text-slate-800">สัดส่วนคะแนนออนไลน์</h3>
+                  <p className="text-sm text-slate-500">จากคะแนนที่ผ่านการตรวจสอบ</p>
+
+                  {results.verified === 0 ? (
+                    <p className="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีข้อมูลสำหรับกราฟ</p>
+                  ) : (
+                    <>
+                      <div className="mx-auto mt-6 grid w-48 place-items-center">
+                        <div className="grid h-48 w-48 place-items-center rounded-full" style={donutStyle}>
+                          <div className="grid h-32 w-32 place-items-center rounded-full bg-white text-center shadow-inner">
+                            <p className="text-xs text-slate-500">คะแนนที่นับแล้ว</p>
+                            <p className="text-3xl font-black text-slate-800">{results.verified}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="mt-6 space-y-2">
-                      {onlineItems.map((item) => (
-                        <div key={`${item.key}-legend`} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
-                          <p className="text-sm font-medium text-slate-700">{item.icon} {item.label}</p>
-                          <p className="text-sm font-bold text-slate-800">{fmtPct(item.count, results.verified)}%</p>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </article>
-            </section>
+                      <div className="mt-6 space-y-2">
+                        {onlineItems.map((item) => (
+                          <div key={`${item.key}-legend`} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+                            <p className="text-sm font-medium text-slate-700">{item.icon} {item.label}</p>
+                            <p className="text-sm font-bold text-slate-800">{fmtPct(item.count, results.verified)}%</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </article>
+              </section>
+            )}
 
             <section className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
               <div className="mb-4 flex items-end justify-between">

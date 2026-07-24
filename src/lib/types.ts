@@ -1,3 +1,5 @@
+import type { RepresentativeVote } from '@/lib/representatives';
+
 export type VoteChoice = 'juristic' | 'municipality' | 'abstain' | 'follow_majority';
 export type BallotStatus = 'submitted' | 'verified' | 'rejected';
 export type DocType = 'house_registration' | 'proxy_letter' | 'id_card_owner' | 'id_card_proxy';
@@ -21,6 +23,7 @@ export interface Ballot {
   is_proxy: boolean;
   proxy_name: string | null;
   choice: VoteChoice;
+  representative_votes: RepresentativeVote[] | null;
   status: BallotStatus;
   is_offline: boolean;
   reject_reason: string | null;
@@ -84,6 +87,14 @@ export interface VoteResults {
   municipality_offline: number;
   abstain_offline: number;
   follow_majority_offline: number;
+  representatives?: {
+    name: string;
+    approved: number;
+    rejected: number;
+    pendingApproved: number;
+    pendingRejected: number;
+  }[];
+  hasRepresentativeVotes?: boolean;
   statusCounts: {
     none: number;
     voted: number;

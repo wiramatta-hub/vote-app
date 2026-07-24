@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getVoterSession } from '@/lib/session';
+import {
+  hasCompleteRepresentativeVotes,
+  normalizeRepresentativeVotes,
+} from '@/lib/representatives';
 
 const VALID_CHOICES = ['juristic', 'municipality', 'abstain', 'follow_majority'];
+const DEFAULT_REPRESENTATIVE_CHOICE = 'juristic';
 
 export async function POST(req: NextRequest) {
   const session = await getVoterSession();
@@ -33,7 +38,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const choice = body.choice as string;
+  const representativeVotes = normalizeRepresentativeVotes(body.representative_votes);
+  const hasRepresentativeVotes = hasCompleteRepresentativeVotes(representativeVotes);
+  const choice = hasRepresentativeVotes ? DEFAULT_REPRESENTATIVE_CHOICE : (body.choice as string);
   const voterName = (body.voter_name as string)?.trim();
   const isProxy = body.is_proxy === true;
 
@@ -44,8 +51,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!VALID_CHOICES.includes(choice)) {
+  if (!hasRepresentativeVotes && !VALID_CHOICES.includes(choice)) {
     return NextResponse.json({ error: 'ตัวเลือกไม่ถูกต้อง' }, { status: 400 });
+  }
+
+  if (!choice || (!hasRepresentativeVotes && !VALID_CHOICES.includes(choice))) {
+    return NextResponse.json({ error: 'กรุณาเลือกมติ' }, { status: 400 });
+  }
+
+  if (body.representative_votes && !hasRepresentativeVotes) {
+    return NextResponse.json({ error: 'กรุณาเลือกเห็นชอบหรือไม่เห็นชอบให้ครบทุกท่าน' }, { status: 400 });
   }
 
   // Prevent double voting
@@ -65,10 +80,10 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip');
 
   const ballots = await sql`
-    INSERT INTO ballots (household_id, voter_name, is_proxy, proxy_name, choice, status, ip_address)
+    INSERT INTO ballots (household_id, voter_name, is_proxy, proxy_name, choice, representative_votes, status, ip_address)
     VALUES (
       ${session.householdId}, ${voterName}, ${isProxy},
-      ${null}, ${choice}, 'submitted', ${ip}
+      ${null}, ${choice}, ${hasRepresentativeVotes ? JSON.stringify(representativeVotes) : null}::jsonb, 'submitted', ${ip}
     )
     RETURNING id
   `;
@@ -82,7 +97,7 @@ export async function POST(req: NextRequest) {
     INSERT INTO audit_logs (actor, action, target_id, metadata, ip_address)
     VALUES (
       ${session.houseNo}, 'vote_submitted', ${ballot.id},
-      ${JSON.stringify({ choice, is_proxy: isProxy })}, ${ip}
+      ${JSON.stringify({ choice, is_proxy: isProxy, representative_votes: representativeVotes })}, ${ip}
     )
   `;
 

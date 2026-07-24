@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { VoteConfig } from '@/lib/types';
+import {
+  REPRESENTATIVES,
+  type RepresentativeDecision,
+  type RepresentativeVote,
+} from '@/lib/representatives';
 
 interface HouseholdInfo {
   house_no: string;
@@ -13,12 +18,14 @@ export default function VotePage() {
   const router = useRouter();
   const [config, setConfig] = useState<VoteConfig | null>(null);
   const [household, setHousehold] = useState<HouseholdInfo | null>(null);
-  const [choice, setChoice] = useState<'juristic' | 'municipality' | 'abstain' | 'follow_majority' | ''>('');
   const [voterName, setVoterName] = useState('');
   const [isProxy, setIsProxy] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [representativeDecisions, setRepresentativeDecisions] = useState<Record<string, RepresentativeDecision | ''>>(
+    () => Object.fromEntries(REPRESENTATIVES.map((name) => [name, '']))
+  );
 
   const startsAtMs = config?.starts_at ? new Date(config.starts_at).getTime() : null;
   const endsAtMs = config?.ends_at ? new Date(config.ends_at).getTime() : null;
@@ -61,7 +68,15 @@ export default function VotePage() {
       return;
     }
 
-    if (!choice) { setError('กรุณาเลือกมติ'); return; }
+    const representativeVotes: RepresentativeVote[] = REPRESENTATIVES.map((representative) => ({
+      representative,
+      decision: representativeDecisions[representative] as RepresentativeDecision,
+    }));
+
+    if (representativeVotes.some((vote) => !vote.decision)) {
+      setError('กรุณาเลือกเห็นชอบหรือไม่เห็นชอบให้ครบทุกท่าน');
+      return;
+    }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
 
     setSubmitting(true);
@@ -70,7 +85,7 @@ export default function VotePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          choice,
+          representative_votes: representativeVotes,
           voter_name: voterName.trim(),
           is_proxy: isProxy,
         }),
@@ -104,9 +119,6 @@ export default function VotePage() {
       </div>
     );
   }
-
-  const optionA = config?.option_a_label ?? 'จัดตั้งนิติบุคคลหมู่บ้าน';
-  const optionB = config?.option_b_label ?? 'ให้เทศบาลรับภารกิจดูแล';
 
   const formatDateThai = (value: string | null | undefined) => {
     if (!value) return '-';
@@ -177,46 +189,52 @@ export default function VotePage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Choice */}
+            {/* Representative decisions */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                เลือกมติ <span className="text-red-500">*</span>
+                รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-1 gap-3">
-                {[
-                  { value: 'juristic', label: optionA, icon: '🏢', desc: 'จัดตั้งนิติบุคคลดูแลหมู่บ้านเอง' },
-                  { value: 'municipality', label: optionB, icon: '🏛️', desc: 'ให้เทศบาลรับหน้าที่ดูแลแทน' },
-                  { value: 'abstain', label: 'งดออกเสียง', icon: '⚪', desc: 'ไม่ขอออกเสียงในมตินี้' },
-                  { value: 'follow_majority', label: 'ออกเสียงตามข้างมาก', icon: '🤝', desc: 'ขอออกเสียงตามเสียงส่วนใหญ่' },
-                ].map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      choice === opt.value
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="choice"
-                      value={opt.value}
-                      checked={choice === opt.value}
-                      onChange={() => setChoice(opt.value as 'juristic' | 'municipality' | 'abstain' | 'follow_majority')}
-                      className="sr-only"
-                    />
-                    <span className="text-2xl">{opt.icon}</span>
-                    <div>
-                      <p className="font-semibold text-gray-800">{opt.label}</p>
-                      <p className="text-xs text-gray-500">{opt.desc}</p>
+              <p className="text-sm text-gray-500 mb-3">
+                กรุณาเลือกความเห็นของท่านต่อรายชื่อตัวแทนแต่ละท่านให้ครบทุกชื่อ
+              </p>
+              <div className="space-y-3">
+                {REPRESENTATIVES.map((representative) => {
+                  const selectedDecision = representativeDecisions[representative];
+
+                  return (
+                    <div key={representative} className="rounded-xl border border-gray-200 p-4">
+                      <p className="font-semibold text-gray-800">{representative}</p>
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        {[
+                          { value: 'approve', label: 'เห็นชอบ', activeClass: 'border-emerald-500 bg-emerald-50 text-emerald-700' },
+                          { value: 'reject', label: 'ไม่เห็นชอบ', activeClass: 'border-rose-500 bg-rose-50 text-rose-700' },
+                        ].map((option) => (
+                          <label
+                            key={option.value}
+                            className={`flex cursor-pointer items-center justify-center rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all ${
+                              selectedDecision === option.value
+                                ? option.activeClass
+                                : 'border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`representative-${representative}`}
+                              value={option.value}
+                              checked={selectedDecision === option.value}
+                              onChange={() => setRepresentativeDecisions((prev) => ({
+                                ...prev,
+                                [representative]: option.value as RepresentativeDecision,
+                              }))}
+                              className="sr-only"
+                            />
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      choice === opt.value ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
-                    }`}>
-                      {choice === opt.value && <div className="w-2 h-2 bg-white rounded-full" />}
-                    </div>
-                  </label>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

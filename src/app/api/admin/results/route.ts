@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getAdminSession } from '@/lib/session';
+import { REPRESENTATIVES } from '@/lib/representatives';
 
 export async function GET() {
   const session = await getAdminSession();
@@ -53,6 +54,35 @@ export async function GET() {
   const offlineMap: Record<string, number> = {};
   for (const row of offlineRows) offlineMap[row.choice] = row.count;
 
+  const representativeRows = await sql`
+    SELECT
+      rv->>'representative' AS representative,
+      rv->>'decision' AS decision,
+      b.status,
+      COUNT(*)::int AS count
+    FROM ballots b
+    CROSS JOIN LATERAL jsonb_array_elements(COALESCE(b.representative_votes, '[]'::jsonb)) AS rv
+    WHERE b.is_offline = false
+      AND b.status IN ('verified', 'submitted')
+    GROUP BY rv->>'representative', rv->>'decision', b.status
+  `;
+  const representativeMap = new Map<string, { approved: number; rejected: number; pendingApproved: number; pendingRejected: number }>();
+  for (const name of REPRESENTATIVES) {
+    representativeMap.set(name, { approved: 0, rejected: 0, pendingApproved: 0, pendingRejected: 0 });
+  }
+  for (const row of representativeRows) {
+    const current = representativeMap.get(row.representative);
+    if (!current) continue;
+    if (row.status === 'verified' && row.decision === 'approve') current.approved = row.count;
+    if (row.status === 'verified' && row.decision === 'reject') current.rejected = row.count;
+    if (row.status === 'submitted' && row.decision === 'approve') current.pendingApproved = row.count;
+    if (row.status === 'submitted' && row.decision === 'reject') current.pendingRejected = row.count;
+  }
+  const representatives = Array.from(representativeMap.entries()).map(([name, counts]) => ({ name, ...counts }));
+  const hasRepresentativeVotes = representatives.some(
+    (row) => row.approved || row.rejected || row.pendingApproved || row.pendingRejected
+  );
+
   // Per-household derived status (active households only)
   const householdStatusRows = await sql`
     SELECT
@@ -103,6 +133,8 @@ export async function GET() {
     municipality_offline: offlineMap['municipality'] ?? 0,
     abstain_offline: offlineMap['abstain'] ?? 0,
     follow_majority_offline: offlineMap['follow_majority'] ?? 0,
+    representatives,
+    hasRepresentativeVotes,
     statusCounts,
     votingOpen,
   });

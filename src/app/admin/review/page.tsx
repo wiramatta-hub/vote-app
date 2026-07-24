@@ -27,6 +27,11 @@ const CHOICE_LABEL: Record<string, string> = {
   follow_majority: '🤝 ตามข้างมาก',
 };
 
+const DECISION_LABEL: Record<string, string> = {
+  approve: 'เห็นชอบ',
+  reject: 'ไม่เห็นชอบ',
+};
+
 export default function ReviewPage() {
   const router = useRouter();
   const [tab, setTab] = useState<TabStatus>('submitted');
@@ -249,7 +254,11 @@ export default function ReviewPage() {
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[ballot.status]}`}>
                       {TAB_LABELS[ballot.status as TabStatus]}
                     </span>
-                    <span className="text-sm text-gray-600">{CHOICE_LABEL[ballot.choice]}</span>
+                    <span className="text-sm text-gray-600">
+                      {ballot.representative_votes?.length
+                        ? `ลงมติตัวแทน ${ballot.representative_votes.length} ท่าน`
+                        : CHOICE_LABEL[ballot.choice]}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-400">
@@ -325,6 +334,28 @@ export default function ReviewPage() {
                         </button>
                       )}
                     </div>
+
+                    {ballot.representative_votes && ballot.representative_votes.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">ผลการลงมติรายชื่อตัวแทน</p>
+                        <div className="space-y-2">
+                          {ballot.representative_votes.map((vote) => (
+                            <div key={vote.representative} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                              <span className="text-gray-700">{vote.representative}</span>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                  vote.decision === 'approve'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-rose-100 text-rose-700'
+                                }`}
+                              >
+                                {DECISION_LABEL[vote.decision] ?? vote.decision}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Documents check */}
                     <div>
