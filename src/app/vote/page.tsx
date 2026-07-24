@@ -39,6 +39,12 @@ export default function VotePage() {
   const hasAllRepresentativeDecisions = REPRESENTATIVES.every(
     (representative) => representativeDecisions[representative]
   );
+  const firstDecision = representativeDecisions[REPRESENTATIVES[0]];
+  const selectedBulkDecision = hasAllRepresentativeDecisions && REPRESENTATIVES.every(
+    (representative) => representativeDecisions[representative] === firstDecision
+  )
+    ? firstDecision
+    : '';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -138,6 +144,12 @@ export default function VotePage() {
     context.lineWidth = 2.5;
     context.strokeStyle = '#312e81';
     setSignatureData('');
+  };
+
+  const setAllRepresentativeDecisions = (decision: RepresentativeDecision) => {
+    setRepresentativeDecisions(
+      Object.fromEntries(REPRESENTATIVES.map((representative) => [representative, decision])) as Record<string, RepresentativeDecision>
+    );
   };
 
   useEffect(() => {
@@ -318,78 +330,43 @@ export default function VotePage() {
                 <label className="block text-base font-bold text-slate-800">
                   รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
                 </label>
-                <p className="mt-1 text-sm text-slate-500">โปรดเลือกความเห็นของท่านต่อรายชื่อตัวแทนให้ครบทุกท่าน</p>
+                <p className="mt-1 text-sm text-slate-500">เลือกความเห็นครั้งเดียวเพื่อใช้กับรายชื่อทั้งหมด</p>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <div className="grid grid-cols-[minmax(0,1fr)_120px_120px] items-center border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
-                  <p>รายชื่อ</p>
-                  <p className="text-center text-emerald-700">เห็นชอบ</p>
-                  <p className="text-center text-rose-700">ไม่เห็นชอบ</p>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setAllRepresentativeDecisions('approve')}
+                    className={`rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all ${
+                      selectedBulkDecision === 'approve'
+                        ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-400 hover:bg-emerald-50'
+                    }`}
+                  >
+                    ✓ เห็นชอบ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAllRepresentativeDecisions('reject')}
+                    className={`rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all ${
+                      selectedBulkDecision === 'reject'
+                        ? 'border-rose-500 bg-rose-500 text-white shadow-sm shadow-rose-200'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-rose-400 hover:bg-rose-50'
+                    }`}
+                  >
+                    ✕ ไม่เห็นชอบ
+                  </button>
                 </div>
-                {REPRESENTATIVES.map((representative, index) => {
-                  const selectedDecision = representativeDecisions[representative];
-                  const rowBorder = index === REPRESENTATIVES.length - 1 ? '' : 'border-b border-slate-100';
-
-                  return (
-                    <div
-                      key={representative}
-                      className={`grid grid-cols-[minmax(0,1fr)_120px_120px] items-center px-4 py-3 ${rowBorder}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-100 text-xs font-bold text-indigo-700">
-                          {representative.replace('คุณ', '').charAt(0)}
-                        </span>
-                        <p className="font-semibold text-slate-800">{representative}</p>
-                      </div>
-
-                      <label className="mx-auto flex cursor-pointer items-center justify-center">
-                        <input
-                          type="radio"
-                          name={`representative-${representative}`}
-                          value="approve"
-                          checked={selectedDecision === 'approve'}
-                          onChange={() => setRepresentativeDecisions((prev) => ({
-                            ...prev,
-                            [representative]: 'approve' as RepresentativeDecision,
-                          }))}
-                          className="sr-only"
-                        />
-                        <span
-                          className={`flex h-11 w-20 items-center justify-center rounded-xl border-2 text-sm font-bold transition-all ${
-                            selectedDecision === 'approve'
-                              ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200'
-                              : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-400 hover:bg-emerald-50'
-                          }`}
-                        >
-                          ✓
-                        </span>
-                      </label>
-
-                      <label className="mx-auto flex cursor-pointer items-center justify-center">
-                        <input
-                          type="radio"
-                          name={`representative-${representative}`}
-                          value="reject"
-                          checked={selectedDecision === 'reject'}
-                          onChange={() => setRepresentativeDecisions((prev) => ({
-                            ...prev,
-                            [representative]: 'reject' as RepresentativeDecision,
-                          }))}
-                          className="sr-only"
-                        />
-                        <span
-                          className={`flex h-11 w-20 items-center justify-center rounded-xl border-2 text-sm font-bold transition-all ${
-                            selectedDecision === 'reject'
-                              ? 'border-rose-500 bg-rose-500 text-white shadow-sm shadow-rose-200'
-                              : 'border-slate-200 bg-white text-slate-500 hover:border-rose-400 hover:bg-rose-50'
-                          }`}
-                        >
-                          ✕
-                        </span>
-                      </label>
-                    </div>
-                  );
-                })}
+                <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-slate-500 mb-2">รายชื่อทั้งหมด ({REPRESENTATIVES.length} ท่าน)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {REPRESENTATIVES.map((representative) => (
+                      <span key={representative} className="rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
+                        {representative}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
