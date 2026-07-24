@@ -43,12 +43,17 @@ export async function POST(req: NextRequest) {
   const choice = hasRepresentativeVotes ? DEFAULT_REPRESENTATIVE_CHOICE : (body.choice as string);
   const voterName = (body.voter_name as string)?.trim();
   const isProxy = body.is_proxy === true;
+  const signatureData = String(body.signature_data ?? '').trim();
 
-  if (!choice || !voterName) {
+  if (!choice || !voterName || !signatureData) {
     return NextResponse.json(
       { error: 'กรุณากรอกข้อมูลให้ครบถ้วน' },
       { status: 400 }
     );
+  }
+
+  if (!signatureData.startsWith('data:image/png;base64,')) {
+    return NextResponse.json({ error: 'ลายเซ็นไม่ถูกต้อง' }, { status: 400 });
   }
 
   if (!hasRepresentativeVotes && !VALID_CHOICES.includes(choice)) {
@@ -81,10 +86,10 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip');
 
   const ballots = await sql`
-    INSERT INTO ballots (household_id, voter_name, is_proxy, proxy_name, choice, representative_votes, status, ip_address)
+    INSERT INTO ballots (household_id, voter_name, is_proxy, proxy_name, choice, representative_votes, signature_data, status, ip_address)
     VALUES (
       ${session.householdId}, ${voterName}, ${isProxy},
-      ${null}, ${choice}, ${hasRepresentativeVotes ? JSON.stringify(representativeVotes) : null}::jsonb, 'submitted', ${ip}
+      ${null}, ${choice}, ${hasRepresentativeVotes ? JSON.stringify(representativeVotes) : null}::jsonb, ${signatureData}, 'submitted', ${ip}
     )
     RETURNING id
   `;
@@ -98,7 +103,7 @@ export async function POST(req: NextRequest) {
     INSERT INTO audit_logs (actor, action, target_id, metadata, ip_address)
     VALUES (
       ${session.houseNo}, 'vote_submitted', ${ballot.id},
-      ${JSON.stringify({ choice, is_proxy: isProxy, representative_votes: representativeVotes })}, ${ip}
+      ${JSON.stringify({ choice, is_proxy: isProxy, representative_votes: representativeVotes, has_signature: true })}, ${ip}
     )
   `;
 

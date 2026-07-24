@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { VoteConfig } from '@/lib/types';
 import {
@@ -16,12 +16,17 @@ interface HouseholdInfo {
 
 export default function VotePage() {
   const router = useRouter();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const drawingRef = useRef(false);
+  const movedRef = useRef(false);
   const [config, setConfig] = useState<VoteConfig | null>(null);
   const [household, setHousehold] = useState<HouseholdInfo | null>(null);
   const [voterName, setVoterName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [signatureData, setSignatureData] = useState('');
   const [representativeDecisions, setRepresentativeDecisions] = useState<Record<string, RepresentativeDecision | ''>>(
     () => Object.fromEntries(REPRESENTATIVES.map((name) => [name, '']))
   );
@@ -31,6 +36,106 @@ export default function VotePage() {
   const now = Date.now();
   const beforeStart = !!startsAtMs && now < startsAtMs;
   const afterEnd = !!endsAtMs && now > endsAtMs;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = rect.width * ratio;
+    canvas.height = 170 * ratio;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = '170px';
+
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.scale(ratio, ratio);
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.lineWidth = 2.5;
+    context.strokeStyle = '#312e81';
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, rect.width, 170);
+  }, []);
+
+  const getCanvasPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  };
+
+  const persistSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setSignatureData(canvas.toDataURL('image/png'));
+  };
+
+  const startDrawing = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const point = getCanvasPoint(event);
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!point || !canvas || !context) return;
+
+    drawingRef.current = true;
+    movedRef.current = false;
+    canvas.setPointerCapture(event.pointerId);
+    context.beginPath();
+    context.moveTo(point.x, point.y);
+  };
+
+  const draw = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    const point = getCanvasPoint(event);
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!point || !context) return;
+
+    movedRef.current = true;
+    context.lineTo(point.x, point.y);
+    context.stroke();
+  };
+
+  const stopDrawing = (event?: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (event && canvas?.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    if (context && !movedRef.current) {
+      const point = event ? getCanvasPoint(event) : null;
+      if (point) {
+        context.beginPath();
+        context.arc(point.x, point.y, 1.2, 0, Math.PI * 2);
+        context.fillStyle = '#312e81';
+        context.fill();
+      }
+    }
+    drawingRef.current = false;
+    persistSignature();
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return;
+    context.save();
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.restore();
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.lineWidth = 2.5;
+    context.strokeStyle = '#312e81';
+    setSignatureData('');
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -77,6 +182,7 @@ export default function VotePage() {
       return;
     }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
+    if (!signatureData) { setError('กรุณาเซ็นลายมือชื่อก่อนยืนยันลงมติ'); return; }
 
     setSubmitting(true);
     try {
@@ -87,6 +193,7 @@ export default function VotePage() {
           representative_votes: representativeVotes,
           voter_name: voterName.trim(),
           is_proxy: false,
+          signature_data: signatureData,
         }),
       });
       const data = await res.json();
@@ -187,7 +294,7 @@ export default function VotePage() {
             <div>
               <div className="mb-4">
                 <label className="block text-base font-bold text-slate-800">
-                รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
+                  รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
                 </label>
                 <p className="mt-1 text-sm text-slate-500">โปรดเลือกความเห็นของท่านต่อรายชื่อตัวแทนให้ครบทุกท่าน</p>
               </div>
@@ -237,9 +344,38 @@ export default function VotePage() {
               </div>
             </div>
 
+            <div>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <label className="block text-base font-bold text-slate-800">
+                    ลายมือชื่อผู้ลงมติ <span className="text-red-500">*</span>
+                  </label>
+                  <p className="mt-1 text-sm text-slate-500">กรุณาเซ็นชื่อในกรอบด้านล่างก่อนกดยืนยันลงมติ</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                >
+                  ล้างลายเซ็น
+                </button>
+              </div>
+
+              <div ref={wrapperRef} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-inner shadow-slate-100">
+                <canvas
+                  ref={canvasRef}
+                  onPointerDown={startDrawing}
+                  onPointerMove={draw}
+                  onPointerUp={stopDrawing}
+                  onPointerLeave={() => stopDrawing()}
+                  className="block h-[170px] w-full cursor-crosshair rounded-xl border border-dashed border-slate-200 bg-white touch-none"
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
-              disabled={submitting || beforeStart || afterEnd}
+              disabled={submitting || beforeStart || afterEnd || !signatureData}
               className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:from-indigo-300 disabled:to-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 disabled:shadow-none disabled:translate-y-0"
             >
               {submitting ? 'กำลังส่งมติ...' : beforeStart ? 'ยังไม่ถึงเวลาเริ่มลงมติ' : afterEnd ? 'หมดเวลาลงมติแล้ว' : 'ยืนยันและส่งมติ'}

@@ -357,6 +357,19 @@ export default function ReviewPage() {
                       </div>
                     )}
 
+                    {ballot.signature_data && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">ลายมือชื่อผู้ลงมติ</p>
+                        <div className="rounded-xl border border-slate-200 bg-white p-3">
+                          <img
+                            src={ballot.signature_data}
+                            alt="ลายมือชื่อผู้ลงมติ"
+                            className="h-24 w-full rounded-lg bg-slate-50 object-contain"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Documents check */}
                     <div>
                       <p className="text-sm font-semibold text-gray-700 mb-2">เอกสารแนบ (เจ้าหน้าที่ตรวจรับ)</p>

@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS ballots (
   proxy_name TEXT,
   choice TEXT NOT NULL CHECK (choice IN ('juristic', 'municipality', 'abstain', 'follow_majority')),
   representative_votes JSONB,
+  signature_data TEXT,
   status TEXT NOT NULL DEFAULT 'submitted'
     CHECK (status IN ('submitted', 'verified', 'rejected')),
   reject_reason TEXT,

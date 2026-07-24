@@ -24,6 +24,7 @@ export interface Ballot {
   proxy_name: string | null;
   choice: VoteChoice;
   representative_votes: RepresentativeVote[] | null;
+  signature_data: string | null;
   status: BallotStatus;
   is_offline: boolean;
   reject_reason: string | null;
