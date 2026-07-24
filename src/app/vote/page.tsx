@@ -36,6 +36,9 @@ export default function VotePage() {
   const now = Date.now();
   const beforeStart = !!startsAtMs && now < startsAtMs;
   const afterEnd = !!endsAtMs && now > endsAtMs;
+  const hasAllRepresentativeDecisions = REPRESENTATIVES.every(
+    (representative) => representativeDecisions[representative]
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -375,7 +378,7 @@ export default function VotePage() {
 
             <button
               type="submit"
-              disabled={submitting || beforeStart || afterEnd || !signatureData}
+              disabled={submitting || beforeStart || afterEnd || !signatureData || !hasAllRepresentativeDecisions}
               className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:from-indigo-300 disabled:to-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 disabled:shadow-none disabled:translate-y-0"
             >
               {submitting ? 'กำลังส่งมติ...' : beforeStart ? 'ยังไม่ถึงเวลาเริ่มลงมติ' : afterEnd ? 'หมดเวลาลงมติแล้ว' : 'ยืนยันและส่งมติ'}
