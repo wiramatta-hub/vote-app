@@ -181,7 +181,7 @@ export default function VotePage() {
     }));
 
     if (representativeVotes.some((vote) => !vote.decision)) {
-      setError('กรุณาเลือกเห็นชอบหรือไม่เห็นชอบให้ครบทุกท่าน');
+      setError('กรุณากดเห็นชอบให้ครบทุกท่าน');
       return;
     }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
@@ -318,7 +318,7 @@ export default function VotePage() {
                 <label className="block text-base font-bold text-slate-800">
                   รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
                 </label>
-                <p className="mt-1 text-sm text-slate-500">โปรดเลือกความเห็นของท่านต่อรายชื่อตัวแทนให้ครบทุกท่าน</p>
+                <p className="mt-1 text-sm text-slate-500">โปรดกดเห็นชอบให้ครบทุกท่านก่อนยืนยันลงมติ</p>
               </div>
               <div className="space-y-3">
                 {REPRESENTATIVES.map((representative) => {
@@ -332,33 +332,21 @@ export default function VotePage() {
                         </span>
                         <p className="font-bold text-slate-800">{representative}</p>
                       </div>
-                      <div className="mt-3 grid grid-cols-2 gap-3">
-                        {[
-                          { value: 'approve', label: '✓ เห็นชอบ', activeClass: 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200' },
-                          { value: 'reject', label: '✕ ไม่เห็นชอบ', activeClass: 'border-rose-500 bg-rose-500 text-white shadow-sm shadow-rose-200' },
-                        ].map((option) => (
-                          <label
-                            key={option.value}
-                            className={`flex cursor-pointer items-center justify-center rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all ${
-                              selectedDecision === option.value
-                                ? option.activeClass
-                                : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`representative-${representative}`}
-                              value={option.value}
-                              checked={selectedDecision === option.value}
-                              onChange={() => setRepresentativeDecisions((prev) => ({
-                                ...prev,
-                                [representative]: option.value as RepresentativeDecision,
-                              }))}
-                              className="sr-only"
-                            />
-                            {option.label}
-                          </label>
-                        ))}
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          onClick={() => setRepresentativeDecisions((prev) => ({
+                            ...prev,
+                            [representative]: 'approve' as RepresentativeDecision,
+                          }))}
+                          className={`flex w-full items-center justify-center rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all ${
+                            selectedDecision === 'approve'
+                              ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'
+                          }`}
+                        >
+                          ✓ เห็นชอบ
+                        </button>
                       </div>
                     </div>
                   );
