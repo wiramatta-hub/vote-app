@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
     SELECT id FROM ballots
     WHERE household_id = ${session.householdId}
       AND status IN ('submitted', 'verified')
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     LIMIT 1
   `;
   if (existing[0]) {

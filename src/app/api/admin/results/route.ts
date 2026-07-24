@@ -27,6 +27,7 @@ export async function GET() {
     SELECT status, COUNT(*)::int AS count
     FROM ballots
     WHERE is_offline = false
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     GROUP BY status
   `;
   const statusMap: Record<string, number> = {};
@@ -35,7 +36,9 @@ export async function GET() {
   const choiceRows = await sql`
     SELECT choice, status, COUNT(*)::int AS count
     FROM ballots
-    WHERE status IN ('verified', 'submitted') AND is_offline = false
+    WHERE status IN ('verified', 'submitted')
+      AND is_offline = false
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     GROUP BY choice, status
   `;
   const choiceMap: Record<string, number> = {};
@@ -49,6 +52,7 @@ export async function GET() {
     SELECT choice, COUNT(*)::int AS count
     FROM ballots
     WHERE is_offline = true
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     GROUP BY choice
   `;
   const offlineMap: Record<string, number> = {};
@@ -86,9 +90,9 @@ export async function GET() {
   // Per-household derived status (active households only)
   const householdStatusRows = await sql`
     SELECT
-      bool_or(b.is_offline) AS has_offline,
-      bool_or(b.status = 'verified' AND b.is_offline = false) AS has_verified,
-      bool_or(b.status = 'submitted' AND b.is_offline = false) AS has_submitted,
+      bool_or(b.is_offline AND COALESCE(jsonb_array_length(b.representative_votes), 0) > 0) AS has_offline,
+      bool_or(b.status = 'verified' AND b.is_offline = false AND COALESCE(jsonb_array_length(b.representative_votes), 0) > 0) AS has_verified,
+      bool_or(b.status = 'submitted' AND b.is_offline = false AND COALESCE(jsonb_array_length(b.representative_votes), 0) > 0) AS has_submitted,
       COUNT(b.id)::int AS ballot_count
     FROM households h
     LEFT JOIN ballots b ON b.household_id = h.id

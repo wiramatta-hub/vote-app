@@ -11,6 +11,7 @@ export async function GET() {
     SELECT status, COUNT(*)::int AS count
     FROM ballots
     WHERE is_offline = false
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     GROUP BY status
   `;
   const statusMap: Record<string, number> = {};
@@ -19,7 +20,9 @@ export async function GET() {
   const choiceRows = await sql`
     SELECT choice, COUNT(*)::int AS count
     FROM ballots
-    WHERE status = 'verified' AND is_offline = false
+    WHERE status = 'verified'
+      AND is_offline = false
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     GROUP BY choice
   `;
   const choiceMap: Record<string, number> = {};
@@ -29,6 +32,7 @@ export async function GET() {
     SELECT choice, COUNT(*)::int AS count
     FROM ballots
     WHERE is_offline = true
+      AND COALESCE(jsonb_array_length(representative_votes), 0) > 0
     GROUP BY choice
   `;
   const offlineMap: Record<string, number> = {};
@@ -59,9 +63,7 @@ export async function GET() {
     if (row.status === 'submitted' && row.decision === 'reject') current.pendingRejected = row.count;
   }
   const representatives = Array.from(representativeMap.entries()).map(([name, counts]) => ({ name, ...counts }));
-  const hasRepresentativeVotes = representatives.some(
-    (row) => row.approved || row.rejected || row.pendingApproved || row.pendingRejected
-  );
+  const hasRepresentativeVotes = true;
 
   const submitted = statusMap['submitted'] ?? 0;
   const verified = statusMap['verified'] ?? 0;

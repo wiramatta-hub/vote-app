@@ -16,12 +16,14 @@ export async function GET(req: NextRequest) {
           FROM ballots b
           JOIN households h ON h.id = b.household_id
           WHERE b.status = ${status}
+            AND COALESCE(jsonb_array_length(b.representative_votes), 0) > 0
           ORDER BY b.submitted_at ASC
         `
       : await sql`
           SELECT b.*, h.house_no, h.owner_name
           FROM ballots b
           JOIN households h ON h.id = b.household_id
+          WHERE COALESCE(jsonb_array_length(b.representative_votes), 0) > 0
           ORDER BY b.submitted_at ASC
         `;
 
