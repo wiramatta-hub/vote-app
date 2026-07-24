@@ -227,35 +227,20 @@ export default function VotePage() {
                               }))}
                               className="sr-only"
                             />
-                <a
-                  href="/proxy-letter.pdf"
-                  download
-                              className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:from-indigo-300 disabled:to-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 disabled:shadow-none disabled:translate-y-0"
-                >
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  ดาวน์โหลดแบบฟอร์มหนังสือมอบฉันทะ (PDF)
-                </a>
-                <p className="text-xs text-amber-700 leading-relaxed">
-                  ดาวน์โหลดหนังสือมอบฉันทะ กรอกข้อมูล ลงลายมือชื่อ แล้วส่งเอกสารตัวจริง<br />
-                  1. หนังสือมอบฉันทะ<br />
-                  2. สำเนาบัตรประชาชน ลงชื่อพร้อมขีดคร่อม &ldquo;เอกสารใช้สำหรับการประชุมจัดตั้งนิติบุคคลเท่านั้น&rdquo;<br />
-                  ตามที่อยู่ด้านล่าง
-                </p>
-                <div className="p-3 bg-white border border-amber-300 rounded-lg text-xs text-amber-900 leading-relaxed">
-                  <p className="font-semibold mb-1">📮 ส่งเอกสารตัวจริงมาที่จิตอาสา</p>
-                  <p>คุณอัญชลี อุดร โทรศัพท์ 094-824-3082</p>
-                  <p>บ้านเลขที่ 900/401 ซอย 8 หมู่ 9 หมู่บ้านดีญ่า วาเลย์ (หางดง)</p>
-                  <p>ตำบลหางดง อำเภอหางดง จังหวัดเชียงใหม่ 50230</p>
-                </div>
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
             <button
               type="submit"
               disabled={submitting || beforeStart || afterEnd}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold rounded-xl transition-colors"
+              className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:from-indigo-300 disabled:to-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 disabled:shadow-none disabled:translate-y-0"
             >
               {submitting ? 'กำลังส่งมติ...' : beforeStart ? 'ยังไม่ถึงเวลาเริ่มลงมติ' : afterEnd ? 'หมดเวลาลงมติแล้ว' : 'ยืนยันและส่งมติ'}
             </button>
