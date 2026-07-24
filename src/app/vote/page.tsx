@@ -181,7 +181,7 @@ export default function VotePage() {
     }));
 
     if (representativeVotes.some((vote) => !vote.decision)) {
-      setError('กรุณากดเห็นชอบให้ครบทุกท่าน');
+      setError('กรุณาเลือกเห็นชอบหรือไม่เห็นชอบให้ครบทุกท่าน');
       return;
     }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
@@ -318,36 +318,75 @@ export default function VotePage() {
                 <label className="block text-base font-bold text-slate-800">
                   รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
                 </label>
-                <p className="mt-1 text-sm text-slate-500">โปรดกดเห็นชอบให้ครบทุกท่านก่อนยืนยันลงมติ</p>
+                <p className="mt-1 text-sm text-slate-500">โปรดเลือกความเห็นของท่านต่อรายชื่อตัวแทนให้ครบทุกท่าน</p>
               </div>
-              <div className="space-y-3">
-                {REPRESENTATIVES.map((representative) => {
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <div className="grid grid-cols-[minmax(0,1fr)_120px_120px] items-center border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
+                  <p>รายชื่อ</p>
+                  <p className="text-center text-emerald-700">เห็นชอบ</p>
+                  <p className="text-center text-rose-700">ไม่เห็นชอบ</p>
+                </div>
+                {REPRESENTATIVES.map((representative, index) => {
                   const selectedDecision = representativeDecisions[representative];
+                  const rowBorder = index === REPRESENTATIVES.length - 1 ? '' : 'border-b border-slate-100';
 
                   return (
-                    <div key={representative} className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-4 transition-shadow hover:shadow-md">
+                    <div
+                      key={representative}
+                      className={`grid grid-cols-[minmax(0,1fr)_120px_120px] items-center px-4 py-3 ${rowBorder}`}
+                    >
                       <div className="flex items-center gap-3">
-                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700">
+                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-100 text-xs font-bold text-indigo-700">
                           {representative.replace('คุณ', '').charAt(0)}
                         </span>
-                        <p className="font-bold text-slate-800">{representative}</p>
+                        <p className="font-semibold text-slate-800">{representative}</p>
                       </div>
-                      <div className="mt-3">
-                        <button
-                          type="button"
-                          onClick={() => setRepresentativeDecisions((prev) => ({
+
+                      <label className="mx-auto flex cursor-pointer items-center justify-center">
+                        <input
+                          type="radio"
+                          name={`representative-${representative}`}
+                          value="approve"
+                          checked={selectedDecision === 'approve'}
+                          onChange={() => setRepresentativeDecisions((prev) => ({
                             ...prev,
                             [representative]: 'approve' as RepresentativeDecision,
                           }))}
-                          className={`flex w-full items-center justify-center rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all ${
+                          className="sr-only"
+                        />
+                        <span
+                          className={`flex h-11 w-20 items-center justify-center rounded-xl border-2 text-sm font-bold transition-all ${
                             selectedDecision === 'approve'
                               ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200'
-                              : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'
+                              : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-400 hover:bg-emerald-50'
                           }`}
                         >
-                          ✓ เห็นชอบ
-                        </button>
-                      </div>
+                          ✓
+                        </span>
+                      </label>
+
+                      <label className="mx-auto flex cursor-pointer items-center justify-center">
+                        <input
+                          type="radio"
+                          name={`representative-${representative}`}
+                          value="reject"
+                          checked={selectedDecision === 'reject'}
+                          onChange={() => setRepresentativeDecisions((prev) => ({
+                            ...prev,
+                            [representative]: 'reject' as RepresentativeDecision,
+                          }))}
+                          className="sr-only"
+                        />
+                        <span
+                          className={`flex h-11 w-20 items-center justify-center rounded-xl border-2 text-sm font-bold transition-all ${
+                            selectedDecision === 'reject'
+                              ? 'border-rose-500 bg-rose-500 text-white shadow-sm shadow-rose-200'
+                              : 'border-slate-200 bg-white text-slate-500 hover:border-rose-400 hover:bg-rose-50'
+                          }`}
+                        >
+                          ✕
+                        </span>
+                      </label>
                     </div>
                   );
                 })}
