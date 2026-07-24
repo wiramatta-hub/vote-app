@@ -1,27 +1,39 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-8 sm:flex sm:items-center sm:justify-center sm:py-12">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-indigo-500/35 blur-3xl" />
+        <div className="absolute -bottom-28 -right-16 h-96 w-96 rounded-full bg-cyan-400/25 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:38px_38px]" />
+      </div>
 
-const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+      <div className="relative w-full max-w-lg">
+        <div className="overflow-hidden rounded-[2rem] border border-white/15 bg-white/95 shadow-2xl shadow-black/30 backdrop-blur">
+          <div className="relative overflow-hidden bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-600 px-6 pb-14 pt-8 text-center text-white sm:px-10">
+            <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-white/10" />
+            <div className="absolute -bottom-16 -left-8 h-40 w-40 rounded-full bg-cyan-300/15" />
+            <div className="relative">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-white/20 bg-white/15 shadow-lg backdrop-blur">
+                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <p className="mt-4 text-xs font-bold tracking-[0.2em] text-indigo-100">ONLINE VOTING</p>
+              <h1 className="mt-2 text-xl font-extrabold leading-relaxed sm:text-2xl">ลงมติเห็นชอบแต่งตั้งตัวแทนเจรจากับทางที่ดิน</h1>
+              <p className="mt-2 text-sm text-indigo-100">เพื่อดำเนินการจัดตั้งนิติบุคคลหมู่บ้าน ดีญ่า วาเลย์ หางดง</p>
+            </div>
+          </div>
 
-function formatThaiDateTime(iso: string) {
-  const d = new Date(iso);
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Bangkok', year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(d);
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
-  const day = get('day');
-  const month = THAI_MONTHS[Number(get('month')) - 1];
-  const year = Number(get('year')) + 543;
-  const hour = get('hour') === '24' ? '00' : get('hour');
-  return `${day} ${month} ${year} เวลา ${hour}:${get('minute')} น.`;
-}
+          <div className="relative -mt-6 rounded-t-[2rem] bg-white px-6 pb-7 pt-6 sm:px-10 sm:pb-8">
 
-function formatRemaining(ms: number) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+          <div className="mb-6 text-center">
+            <p className="text-sm font-semibold text-slate-700">ยืนยันตัวตนเพื่อเริ่มลงมติ</p>
+            <p className="mt-1 text-sm text-slate-500">กรอกบ้านเลขที่หรือชื่อ-นามสกุลอย่างใดอย่างหนึ่ง</p>
+
+            <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 px-4 py-3">
+
+                <p className="text-xs font-bold text-indigo-700">
+                  เปิดรับลงมติถึง {formatThaiDateTime(endsAt)}
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -154,7 +166,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 บ้านเลขที่
               </label>
               <input
@@ -162,12 +174,12 @@ export default function LoginPage() {
                 placeholder="เช่น 1/1, 25, 100/5"
                 value={form.house_no}
                 onChange={(e) => setForm({ ...form, house_no: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 ชื่อ-นามสกุลเจ้าบ้าน
               </label>
               <input
@@ -175,24 +187,25 @@ export default function LoginPage() {
                 placeholder="ชื่อ-นามสกุลตามบัตรประชาชน"
                 value={form.owner_name}
                 onChange={(e) => setForm({ ...form, owner_name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
               />
-              <p className="text-xs text-gray-400 mt-1">เจ้าหน้าที่จะตรวจสอบตัวตนจากสำเนาบัตรประชาชนที่ท่านส่งเอกสารให้ตัวแทน</p>
+              <p className="mt-1.5 text-xs text-slate-400">กรอกช่องใดช่องหนึ่งเพื่อค้นหาสิทธิ์ลงมติของท่าน</p>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium rounded-lg transition-colors mt-2"
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-3.5 font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 disabled:translate-y-0 disabled:from-indigo-300 disabled:to-indigo-300 disabled:shadow-none"
             >
               {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-            <a href="/admin/login" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          <div className="mt-7 border-t border-slate-100 pt-5 text-center">
+            <a href="/admin/login" className="text-xs text-slate-400 transition-colors hover:text-indigo-600">
               เข้าสู่ระบบสำหรับผู้ดูแล →
             </a>
+          </div>
           </div>
         </div>
       </div>
