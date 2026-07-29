@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS vote_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  vote_title TEXT NOT NULL DEFAULT 'ลงมติเห็นชอบ แต่งตั้งบุคคลเป็นตัวแทนในการเจรจากับทางที่ดิน เพื่อดำเนินการจัดตั้งนิติบุคคลหมู่บ้าน ดีญ่า วาเลย์ หางดง',
+  vote_title TEXT NOT NULL DEFAULT 'รับรองรายชื่อจิตอาสาตัวแทนสมาชิกหมู่บ้านเพื่อยื่นคําขอจดทะเบียนจัดตั้งนิติบุคคลหมู่บ้านจัดสรร',
   village_name TEXT NOT NULL DEFAULT 'หมู่บ้าน',
   option_a_label TEXT NOT NULL DEFAULT 'จัดตั้งนิติบุคคลหมู่บ้าน',
   option_b_label TEXT NOT NULL DEFAULT 'ให้เทศบาลรับภารกิจดูแล',

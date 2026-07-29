@@ -114,8 +114,11 @@ export default function LoginPage() {
               </svg>
             </div>
             <p className="mt-4 text-xs font-bold tracking-[0.2em] text-indigo-100">ONLINE VOTING</p>
-            <h1 className="mt-2 text-xl font-extrabold leading-relaxed sm:text-2xl">ลงมติเห็นชอบแต่งตั้งตัวแทนเจรจากับทางที่ดิน</h1>
-            <p className="mt-2 text-sm text-indigo-100">เพื่อดำเนินการจัดตั้งนิติบุคคลหมู่บ้าน ดีญ่า วาเลย์ หางดง</p>
+            <h1 className="mt-2 text-xl font-extrabold leading-relaxed sm:text-2xl">
+              รับรองรายชื่อจิตอาสาตัวแทนสมาชิกหมู่บ้านเพื่อ
+              <br />
+              ยื่นคําขอจดทะเบียนจัดตั้งนิติบุคคลหมู่บ้านจัดสรร
+            </h1>
             <p className="mt-3 text-xs leading-relaxed text-indigo-100/95 sm:text-sm">
               📣 ขอความอนุเคราะห์ ร่วมลงชื่อรับรอง“ตัวแทนหมู่บ้าน”เพื่อดำเนินการจัดตั้งนิติบุคคลฯ
             </p>
