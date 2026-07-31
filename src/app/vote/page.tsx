@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import type { VoteConfig } from '@/lib/types';
 import {
   REPRESENTATIVES,
-  type RepresentativeDecision,
   type RepresentativeVote,
 } from '@/lib/representatives';
 
@@ -27,24 +26,12 @@ export default function VotePage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [signatureData, setSignatureData] = useState('');
-  const [representativeDecisions, setRepresentativeDecisions] = useState<Record<string, RepresentativeDecision | ''>>(
-    () => Object.fromEntries(REPRESENTATIVES.map((name) => [name, '']))
-  );
 
   const startsAtMs = config?.starts_at ? new Date(config.starts_at).getTime() : null;
   const endsAtMs = config?.ends_at ? new Date(config.ends_at).getTime() : null;
   const now = Date.now();
   const beforeStart = !!startsAtMs && now < startsAtMs;
   const afterEnd = !!endsAtMs && now > endsAtMs;
-  const hasAllRepresentativeDecisions = REPRESENTATIVES.every(
-    (representative) => representativeDecisions[representative]
-  );
-  const firstDecision = representativeDecisions[REPRESENTATIVES[0]];
-  const selectedBulkDecision = hasAllRepresentativeDecisions && REPRESENTATIVES.every(
-    (representative) => representativeDecisions[representative] === firstDecision
-  )
-    ? firstDecision
-    : '';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -146,12 +133,6 @@ export default function VotePage() {
     setSignatureData('');
   };
 
-  const setAllRepresentativeDecisions = (decision: RepresentativeDecision) => {
-    setRepresentativeDecisions(
-      Object.fromEntries(REPRESENTATIVES.map((representative) => [representative, decision])) as Record<string, RepresentativeDecision>
-    );
-  };
-
   useEffect(() => {
     setLoading(true);
     Promise.all([
@@ -189,15 +170,10 @@ export default function VotePage() {
 
     const representativeVotes: RepresentativeVote[] = REPRESENTATIVES.map((representative) => ({
       representative,
-      decision: representativeDecisions[representative] as RepresentativeDecision,
+      decision: 'approve',
     }));
-
-    if (representativeVotes.some((vote) => !vote.decision)) {
-      setError('กรุณาเลือกเห็นชอบหรือไม่เห็นชอบให้ครบทุกท่าน');
-      return;
-    }
     if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
-    if (!signatureData) { setError('กรุณาเซ็นลายมือชื่อก่อนยืนยันลงมติ'); return; }
+    if (!signatureData) { setError('กรุณาเซ็นลายมือชื่อเพื่อรับรองก่อนบันทึกการรับรอง'); return; }
 
     setSubmitting(true);
     try {
@@ -330,7 +306,7 @@ export default function VotePage() {
                 <label className="block text-base font-bold text-slate-800">
                   รายชื่อจิตอาสาตัวแทนสมาชิกหมู่บ้าน <span className="text-red-500">*</span>
                 </label>
-                <p className="mt-1 text-sm text-slate-500">เลือกความเห็นครั้งเดียวเพื่อใช้กับรายชื่อทั้งหมด</p>
+                <p className="mt-1 text-sm text-slate-500">ตรวจรายชื่อให้ครบก่อนลงลายมือชื่อเพื่อรับรอง</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
                 <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3">
@@ -346,29 +322,8 @@ export default function VotePage() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setAllRepresentativeDecisions('approve')}
-                    className={`rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all ${
-                      selectedBulkDecision === 'approve'
-                        ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-400 hover:bg-emerald-50'
-                    }`}
-                  >
-                    ✓ เห็นชอบ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAllRepresentativeDecisions('reject')}
-                    className={`rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all ${
-                      selectedBulkDecision === 'reject'
-                        ? 'border-rose-500 bg-rose-500 text-white shadow-sm shadow-rose-200'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-rose-400 hover:bg-rose-50'
-                    }`}
-                  >
-                    ✕ ไม่เห็นชอบ
-                  </button>
+                <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  ระบบจะบันทึกการรับรองของรายชื่อทั้งหมดอัตโนมัติเมื่อคุณเซ็นลายมือชื่อและกดบันทึก
                 </div>
               </div>
             </div>
@@ -377,9 +332,9 @@ export default function VotePage() {
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <label className="block text-base font-bold text-slate-800">
-                    ลายมือชื่อผู้ลงมติ <span className="text-red-500">*</span>
+                    ลงลายมือชื่อเพื่อรับรอง <span className="text-red-500">*</span>
                   </label>
-                  <p className="mt-1 text-sm text-slate-500">กรุณาเซ็นชื่อในกรอบด้านล่างก่อนกดยืนยันลงมติ</p>
+                  <p className="mt-1 text-sm text-slate-500">กรุณาเซ็นชื่อในกรอบด้านล่างก่อนกดบันทึกการรับรอง</p>
                 </div>
                 <button
                   type="button"
@@ -404,10 +359,10 @@ export default function VotePage() {
 
             <button
               type="submit"
-              disabled={submitting || beforeStart || afterEnd || !signatureData || !hasAllRepresentativeDecisions}
+              disabled={submitting || beforeStart || afterEnd || !signatureData}
               className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:from-indigo-300 disabled:to-indigo-300 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 disabled:shadow-none disabled:translate-y-0"
             >
-              {submitting ? 'กำลังส่งมติ...' : beforeStart ? 'ยังไม่ถึงเวลาเริ่มลงมติ' : afterEnd ? 'หมดเวลาลงมติแล้ว' : 'ยืนยันและส่งมติ'}
+              {submitting ? 'กำลังบันทึกการรับรอง...' : beforeStart ? 'ยังไม่ถึงเวลาเริ่มรับรอง' : afterEnd ? 'หมดเวลาให้รับรองแล้ว' : 'บันทึกการรับรอง'}
             </button>
           </form>
         </div>
