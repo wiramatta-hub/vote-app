@@ -127,16 +127,16 @@ export default function LoginPage() {
 
         <section className="relative -mt-6 rounded-t-[2rem] bg-white px-6 pb-7 pt-6 sm:px-10 sm:pb-8">
           <div className="mb-6 text-center">
-            <p className="text-sm font-semibold text-slate-700">ยืนยันตัวตนเพื่อเริ่มลงมติ</p>
+            <p className="text-sm font-semibold text-slate-700">ยืนยันตัวตนเพื่อลงชื่อรับรองตัวแทน</p>
             <p className="mt-1 text-sm text-slate-500">กรอกบ้านเลขที่หรือชื่อ-นามสกุลอย่างใดอย่างหนึ่ง</p>
             <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 px-4 py-3">
-              {endsAt && <p className="text-xs font-bold text-indigo-700">เปิดรับลงมติถึง {formatThaiDateTime(endsAt)}</p>}
+              {endsAt && <p className="text-xs font-bold text-indigo-700">เปิดให้ลงชื่อรับรอง ถึง {formatThaiDateTime(endsAt)}</p>}
               {isClosed ? (
-                <p className="mt-1 text-sm font-bold text-rose-600">หมดเวลาลงมติแล้ว</p>
+                <p className="mt-1 text-sm font-bold text-rose-600">หมดเวลาให้ลงชื่อรับรองแล้ว</p>
               ) : notStarted ? (
-                <p className="mt-1 text-sm font-bold text-indigo-900">เปิดลงมติ {startsAt ? formatThaiDateTime(startsAt) : ''}</p>
+                <p className="mt-1 text-sm font-bold text-indigo-900">เปิดลงชื่อรับรอง {startsAt ? formatThaiDateTime(startsAt) : ''}</p>
               ) : (
-                <p className="mt-1 text-sm font-bold text-indigo-900">เวลาคงเหลือ {remaining.days} วัน {remaining.hours}:{remaining.minutes}:{remaining.seconds}</p>
+                <p className="mt-1 text-sm font-bold text-indigo-900">เวลาคงเหลือให้ลงชื่อรับรอง {remaining.days} วัน {remaining.hours}:{remaining.minutes}:{remaining.seconds}</p>
               )}
             </div>
           </div>

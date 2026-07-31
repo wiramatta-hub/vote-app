@@ -328,7 +328,7 @@ export default function VotePage() {
             <div>
               <div className="mb-4">
                 <label className="block text-base font-bold text-slate-800">
-                  รายชื่อตัวแทนเพื่อเจรจากับทางที่ดิน <span className="text-red-500">*</span>
+                  รายชื่อจิตอาสาตัวแทนสมาชิกหมู่บ้าน <span className="text-red-500">*</span>
                 </label>
                 <p className="mt-1 text-sm text-slate-500">เลือกความเห็นครั้งเดียวเพื่อใช้กับรายชื่อทั้งหมด</p>
               </div>
