@@ -73,7 +73,7 @@ export default function ReviewPage() {
   };
 
   const saveEdit = async (ballot: Ballot) => {
-    if (!editVoter.trim()) { alert('กรุณากรอกชื่อผู้ลงมติ'); return; }
+    if (!editVoter.trim()) { alert('กรุณากรอกชื่อผู้รับรอง'); return; }
     if (editIsProxy && !editProxy.trim()) { alert('กรุณากรอกชื่อผู้รับมอบฉันทะ'); return; }
     setSavingEdit(true);
     try {
@@ -209,7 +209,7 @@ export default function ReviewPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="ค้นหา บ้านเลขที่ / ชื่อเจ้าบ้าน / ผู้ลงมติ / ผู้รับมอบฉันทะ"
+            placeholder="ค้นหา บ้านเลขที่ / ชื่อเจ้าบ้าน / ผู้รับรอง / ผู้รับมอบฉันทะ"
             className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-gray-800 bg-white"
           />
           {search && (
@@ -256,7 +256,7 @@ export default function ReviewPage() {
                     </span>
                     <span className="text-sm text-gray-600">
                       {ballot.representative_votes?.length
-                        ? `ลงมติตัวแทน ${ballot.representative_votes.length} ท่าน`
+                        ? `รับรองตัวแทน ${ballot.representative_votes.length} ท่าน`
                         : CHOICE_LABEL[ballot.choice]}
                     </span>
                   </div>
@@ -280,7 +280,7 @@ export default function ReviewPage() {
                       {editingId === ballot.id ? (
                         <div className="space-y-2">
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">ชื่อผู้ลงมติ</label>
+                            <label className="block text-xs text-gray-500 mb-1">ชื่อผู้รับรอง</label>
                             <input
                               type="text"
                               value={editVoter}
@@ -295,7 +295,7 @@ export default function ReviewPage() {
                               onChange={(e) => setEditIsProxy(e.target.checked)}
                               className="w-4 h-4 text-indigo-600 rounded"
                             />
-                            ลงมติแทน (มอบฉันทะ)
+                            ลงชื่อแทน (มอบฉันทะ)
                           </label>
                           {editIsProxy && (
                             <div>
@@ -330,14 +330,14 @@ export default function ReviewPage() {
                           onClick={() => startEdit(ballot)}
                           className="text-indigo-500 hover:text-indigo-700 text-xs underline"
                         >
-                          ✏️ แก้ไขชื่อผู้ลงมติ / การมอบฉันทะ
+                          ✏️ แก้ไขชื่อผู้รับรอง / การมอบฉันทะ
                         </button>
                       )}
                     </div>
 
                     {ballot.representative_votes && ballot.representative_votes.length > 0 && (
                       <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-2">ผลการลงมติรายชื่อตัวแทน</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">ผลการรับรองรายชื่อตัวแทน</p>
                         <div className="space-y-2">
                           {ballot.representative_votes.map((vote) => (
                             <div key={vote.representative} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
@@ -359,11 +359,11 @@ export default function ReviewPage() {
 
                     {ballot.signature_data && (
                       <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-2">ลายมือชื่อผู้ลงมติ</p>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">ลายมือชื่อผู้รับรอง</p>
                         <div className="rounded-xl border border-slate-200 bg-white p-3">
                           <img
                             src={ballot.signature_data}
-                            alt="ลายมือชื่อผู้ลงมติ"
+                            alt="ลายมือชื่อผู้รับรอง"
                             className="h-24 w-full rounded-lg bg-slate-50 object-contain"
                           />
                         </div>

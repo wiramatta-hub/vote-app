@@ -131,7 +131,7 @@ export default function PublicResultsPage() {
             <section className="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-xl shadow-slate-300/40 sm:p-8">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <h3 className="text-2xl font-black text-slate-900 sm:text-4xl">
-                  {hasRepresentativeVotes ? 'ผลเห็นชอบรายชื่อตัวแทน' : 'คะแนนออนไลน์ (นับแล้ว)'}
+                  {hasRepresentativeVotes ? 'ผลการรับรองรายชื่อตัวแทน' : 'คะแนนออนไลน์ (นับแล้ว)'}
                 </h3>
                 <p className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600 sm:text-base">รวม {results.verified} รายการ</p>
               </div>
@@ -208,7 +208,7 @@ export default function PublicResultsPage() {
               <div className="relative grid gap-4 sm:grid-cols-2 sm:gap-6">
                 <div>
                   <p className="text-sm font-semibold text-cyan-200">ภาพรวม ณ ตอนนี้</p>
-                  <h2 className="mt-1 text-2xl font-extrabold sm:text-4xl">บอร์ดสรุปผลการลงมติ</h2>
+                  <h2 className="mt-1 text-2xl font-extrabold sm:text-4xl">บอร์ดสรุปผลการรับรอง</h2>
                   <p className="mt-3 max-w-xl text-sm text-slate-200 sm:text-base">
                     แสดงผลแบบเรียลไทม์จากคะแนนออนไลน์ที่ผ่านการตรวจสอบและคะแนนออฟไลน์จากเจ้าหน้าที่
                   </p>
@@ -261,7 +261,7 @@ export default function PublicResultsPage() {
               <section className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg shadow-slate-200/60 sm:p-6">
                 <div className="mb-4 flex items-end justify-between">
                   <div>
-                    <h3 className="text-xl font-extrabold text-slate-800">ผลเห็นชอบรายชื่อตัวแทน</h3>
+                    <h3 className="text-xl font-extrabold text-slate-800">ผลการรับรองรายชื่อตัวแทน</h3>
                     <p className="text-sm text-slate-500">นับเฉพาะรายการที่ผ่านการตรวจสอบเอกสาร ({results.verified} รายการ)</p>
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export default function PublicResultsPage() {
                   <div className="mb-4 flex items-end justify-between">
                     <div>
                       <h3 className="text-xl font-extrabold text-slate-800">ผลคะแนนออนไลน์</h3>
-                      <p className="text-sm text-slate-500">นับเฉพาะมติที่ผ่านการตรวจสอบเอกสาร ({results.verified} คะแนน)</p>
+                      <p className="text-sm text-slate-500">นับเฉพาะรายการรับรองที่ผ่านการตรวจสอบเอกสาร ({results.verified} คะแนน)</p>
                     </div>
                   </div>
 
@@ -371,7 +371,7 @@ export default function PublicResultsPage() {
               </div>
 
               {results.offline === 0 ? (
-                <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีมติแบบออฟไลน์</p>
+                    <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">ยังไม่มีรายการรับรองแบบออฟไลน์</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {offlineItems.map((opt) => (

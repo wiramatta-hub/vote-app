@@ -160,11 +160,11 @@ export default function VotePage() {
     setError('');
 
     if (beforeStart) {
-      setError('ยังไม่ถึงเวลาเริ่มลงมติ');
+      setError('ยังไม่ถึงเวลาเริ่มรับรอง');
       return;
     }
     if (afterEnd) {
-      setError('หมดเวลาลงมติแล้ว');
+      setError('หมดเวลาให้รับรองแล้ว');
       return;
     }
 
@@ -172,7 +172,7 @@ export default function VotePage() {
       representative,
       decision: 'approve',
     }));
-    if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้ลงมติ'); return; }
+    if (!voterName.trim()) { setError('กรุณากรอกชื่อ-นามสกุลผู้รับรอง'); return; }
     if (!signatureData) { setError('กรุณาเซ็นลายมือชื่อเพื่อรับรองก่อนบันทึกการรับรอง'); return; }
 
     setSubmitting(true);
@@ -239,7 +239,7 @@ export default function VotePage() {
             <div className="relative">
               <p className="text-xs font-semibold tracking-[0.18em] text-indigo-100">ONLINE VOTING</p>
               <h1 className="mt-2 text-xl font-bold leading-relaxed sm:text-2xl">
-                {config?.vote_title ?? 'การลงมติออนไลน์'}
+                {config?.vote_title ?? 'การรับรองออนไลน์'}
               </h1>
               {config?.village_name && (
                 <p className="text-sm text-indigo-100 mt-1">{config.village_name}</p>
@@ -267,7 +267,7 @@ export default function VotePage() {
           <div className="mb-6 flex items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4 text-sm">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-600 text-lg text-white">◷</span>
             <div>
-              <p className="font-semibold text-indigo-900">ช่วงเวลาลงมติ</p>
+              <p className="font-semibold text-indigo-900">ช่วงเวลาลงชื่อรับรอง</p>
               <p className="mt-1 text-indigo-700">
               {formatDateThai(config?.starts_at)} - {formatDateThai(config?.ends_at)}
               </p>
